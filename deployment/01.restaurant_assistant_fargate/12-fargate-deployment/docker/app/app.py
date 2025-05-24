@@ -68,9 +68,12 @@ def verify_api_key(credentials: HTTPAuthorizationCredentials = Security(security
     Returns the credentials if valid, otherwise raises an HTTPException.
     """
     if not API_KEY:
-        # If API_KEY env var is not set, skip authentication (but log warning)
         logger.warning("API authentication bypassed - no API_KEY configured")
-        return credentials
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid authentication scheme. Use Bearer token.",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
 
     if credentials.scheme.lower() != "bearer":
         logger.warning(f"Invalid authentication scheme: {credentials.scheme}")
@@ -104,6 +107,7 @@ system_prompt = """You are \"Restaurant Helper\", a restaurant assistant helping
   Restaurant Helper Address: 101W 87th Street, 100024, New York, New York
   You should only contact restaurant helper for technical support.
   Before making a reservation, make sure that the restaurant exists in our restaurant directory.
+  If you need to the current time, use time tool to get the current time.
   Always confirm with customer before create a booking.
 
   Use the knowledge base retrieval to reply to questions about the restaurants and their menus.
@@ -175,6 +179,7 @@ def health_check():
     """Health check endpoint for the load balancer."""
     logger.debug("Health check request received")
     return {"status": "healthy"}
+
 
 @app.post('/invoke')
 async def invoke(request: PromptRequest, auth: HTTPAuthorizationCredentials = Depends(verify_api_key)):
@@ -255,29 +260,29 @@ async def get_invoke_streaming(request: PromptRequest, auth: HTTPAuthorizationCr
         logger.error(f"Error processing streaming request for session {session_id}: {str(e)}", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
 
-@app.middleware("http")
-async def log_requests(request: Request, call_next):
-    """Middleware to log all incoming requests and responses"""
-    start_time = time.time()
+# @app.middleware("http")
+# async def log_requests(request: Request, call_next):
+#     """Middleware to log all incoming requests and responses"""
+#     start_time = time.time()
 
-    # Get client IP and request details
-    client_host = request.client.host if request.client else "unknown"
-    method = request.method
-    url = str(request.url)
+#     # Get client IP and request details
+#     client_host = request.client.host if request.client else "unknown"
+#     method = request.method
+#     url = str(request.url)
 
-    request_id = f"{int(time.time() * 1000)}-{os.urandom(4).hex()}"
-    logger.info(f"Request {request_id} started: {method} {url} from {client_host}")
+#     request_id = f"{int(time.time() * 1000)}-{os.urandom(4).hex()}"
+#     logger.info(f"Request {request_id} started: {method} {url} from {client_host}")
 
-    # Process the request
-    try:
-        response = await call_next(request)
-        elapsed_time = time.time() - start_time
-        logger.info(f"Request {request_id} completed: {response.status_code} in {elapsed_time:.3f} seconds")
-        return response
-    except Exception as e:
-        elapsed_time = time.time() - start_time
-        logger.error(f"Request {request_id} failed: {str(e)} in {elapsed_time:.3f} seconds", exc_info=True)
-        raise
+#     # Process the request
+#     try:
+#         response = await call_next(request)
+#         elapsed_time = time.time() - start_time
+#         logger.info(f"Request {request_id} completed: {response.status_code} in {elapsed_time:.3f} seconds")
+#         return response
+#     except Exception as e:
+#         elapsed_time = time.time() - start_time
+#         logger.error(f"Request {request_id} failed: {str(e)} in {elapsed_time:.3f} seconds", exc_info=True)
+#         raise
 
 if __name__ == '__main__':
     # Get port from environment variable or default to 8000
