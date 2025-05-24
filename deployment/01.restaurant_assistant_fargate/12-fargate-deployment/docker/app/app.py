@@ -3,31 +3,96 @@ from strands import Agent, tool
 from strands.models import BedrockModel
 from botocore.config import Config
 from typing import Optional
-from fastapi import FastAPI, Request, Response, HTTPException
+import logging
+import json
+import sys
+from fastapi import FastAPI, Request, Response, HTTPException, Security, Depends, status
 from fastapi.responses import StreamingResponse, PlainTextResponse
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from pydantic import BaseModel
 from strands.agent.conversation_manager import SlidingWindowConversationManager
 import uvicorn
 import os
-
+import time
+import boto3
 from session import save_session, load_session 
 from create_booking import create_booking,request_confirm
 from delete_booking import delete_booking
 from get_booking import get_booking_details
+
+# Set up logging
+log_level = os.environ.get("LOG_LEVEL", "INFO").upper()
+logging.basicConfig(
+    level=getattr(logging, log_level),
+    format='%(asctime)s - %(levelname)s - %(filename)s:%(lineno)d - %(message)s',
+    handlers=[logging.StreamHandler(sys.stdout)]
+)
+logger = logging.getLogger("restaurant-assistant")
+
 # Create authentication token:
 import base64
 
-public_key = "pk-lf-ff9f403e-7dd1-402a-a3b2-801659bc7229" 
-secret_key = "sk-lf-e96c8abd-8ad1-40b3-ada0-7486e98ea3e4"
-os.environ["LANGFUSE_HOST"] = "https://d3og9zzfs5n481.cloudfront.net" 
+public_key = os.environ.get("LANGFUSE_PUBLIC_KEY")
+secret_key = os.environ.get("LANGFUSE_SECRET_KEY")
 # Set up endpoint
 otel_endpoint = str(os.environ.get("LANGFUSE_HOST")) + "/api/public/otel/v1/traces"
 auth_token = base64.b64encode(f"{public_key}:{secret_key}".encode()).decode()
 os.environ["OTEL_EXPORTER_OTLP_ENDPOINT"] = otel_endpoint
 os.environ["OTEL_EXPORTER_OTLP_HEADERS"] = f"Authorization=Basic {auth_token}"
 
+# Get API key from SSM Parameter Store if parameter name is provided
+API_KEY_PARAMETER = os.environ.get("API_KEY_PARAMETER")
+# Get API key from environment variables
+API_KEY = os.environ.get("API_KEY")
+if API_KEY_PARAMETER and not API_KEY:
+    try:
+        ssm_client = boto3.client('ssm')
+        api_key_response = ssm_client.get_parameter(
+            Name=API_KEY_PARAMETER,
+            WithDecryption=True
+        )
+        API_KEY = api_key_response['Parameter']['Value']
+        logger.info(f"Retrieved API key from parameter: {API_KEY_PARAMETER}")
+    except Exception as e:
+        logger.error(f"Failed to retrieve API key from parameter: {str(e)}")
+if not API_KEY:
+    logger.warning("API_KEY not available! API will be accessible without authentication.")
 
-app = FastAPI(title="Weather API")
+
+# API Key security
+security = HTTPBearer()
+
+def verify_api_key(credentials: HTTPAuthorizationCredentials = Security(security)):
+    """
+    Verify that the API key provided in the Authorization header is valid.
+    Returns the credentials if valid, otherwise raises an HTTPException.
+    """
+    if not API_KEY:
+        # If API_KEY env var is not set, skip authentication (but log warning)
+        logger.warning("API authentication bypassed - no API_KEY configured")
+        return credentials
+
+    if credentials.scheme.lower() != "bearer":
+        logger.warning(f"Invalid authentication scheme: {credentials.scheme}")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid authentication scheme. Use Bearer token.",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    if credentials.credentials != API_KEY:
+        logger.warning("Invalid API key provided")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid API key",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    return credentials
+
+logger.info("Starting Restaurant Assistant application")
+
+app = FastAPI(title="Restaurant Assistant API")
 
 system_prompt = """You are \"Restaurant Helper\", a restaurant assistant helping customers reserving tables in 
   different restaurants. You can talk about the menus, create new bookings, get the details of an existing booking 
@@ -57,6 +122,9 @@ system_prompt = """You are \"Restaurant Helper\", a restaurant assistant helping
   </guidelines>"""
 
 def get_agent(session_id:str):
+    logger.debug(f"Creating agent for session {session_id}")
+    start_time = time.time()
+
     conversation_manager = SlidingWindowConversationManager(
         window_size=10,  # Maximum number of message pairs to keep
     )
@@ -75,9 +143,15 @@ def get_agent(session_id:str):
             }
         },
     )
-    messages = load_session(session_id)
 
-    return Agent(
+    try:
+        messages = load_session(session_id)
+        logger.debug(f"Loaded session {session_id} with {len(messages)} messages")
+    except Exception as e:
+        logger.error(f"Failed to load session {session_id}: {str(e)}")
+        messages = []
+
+    agent = Agent(
         model=model,
         messages = messages,
         conversation_manager=conversation_manager,
@@ -88,6 +162,10 @@ def get_agent(session_id:str):
         ],
     )
 
+    elapsed_time = time.time() - start_time
+    logger.debug(f"Agent creation completed in {elapsed_time:.2f} seconds")
+    return agent
+
 class PromptRequest(BaseModel):
     prompt: str
     session_id: Optional[str] = 'default' 
@@ -95,67 +173,115 @@ class PromptRequest(BaseModel):
 @app.get('/health')
 def health_check():
     """Health check endpoint for the load balancer."""
+    logger.debug("Health check request received")
     return {"status": "healthy"}
 
 @app.post('/invoke')
-async def invoke(request: PromptRequest):
+async def invoke(request: PromptRequest, auth: HTTPAuthorizationCredentials = Depends(verify_api_key)):
     """Endpoint to get information."""
+    start_time = time.time()
     prompt = request.prompt
     session_id = request.session_id
+
+    logger.info(f"Received invoke request for session {session_id}")
+    logger.debug(f"Prompt: {prompt[:50]}{'...' if len(prompt) > 50 else ''}")
+
     if not prompt:
+        logger.warning(f"No prompt provided in request for session {session_id}")
         raise HTTPException(status_code=400, detail="No prompt provided")
 
     try:
         agent = get_agent(session_id)
+        logger.debug(f"Invoking agent for session {session_id}")
         response = agent(prompt)
         content = str(response)
-        save_session(session_id,agent.messages)
+
+        logger.debug(f"Saving session {session_id}")
+        save_session(session_id, agent.messages)
+
+        elapsed_time = time.time() - start_time
+        logger.info(f"Completed invoke request for session {session_id} in {elapsed_time:.2f} seconds")
         return PlainTextResponse(content=content)
     except Exception as e:
+        logger.error(f"Error processing invoke request for session {session_id}: {str(e)}", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
 
-async def run_agent_and_stream_response(prompt: str,session_id :str):
+async def run_agent_and_stream_response(prompt: str, session_id: str):
     """
     A helper function to yield summary text chunks one by one as they come in, allowing the web server to emit
     them to caller live
     """
-    # is_summarizing = False
-
-    # @tool
-    # def ready_to_summarize():
-    #     """
-    #     A tool that is intended to be called by the agent right before summarize the response.
-    #     """
-    #     nonlocal is_summarizing
-    #     is_summarizing = True
-    #     return "Ok - continue providing the summary!"
-
+    logger.debug(f"Starting streaming response for session {session_id}")
     agent = get_agent(session_id)
 
-    async for item in agent.stream_async(prompt):
-        # if not is_summarizing:
-        #     continue
-        if "data" in item:
-            yield item['data']
-    save_session(session_id,agent.messages)
+    try:
+        chunk_count = 0
+        async for item in agent.stream_async(prompt):
+            if "data" in item:
+                chunk_count += 1
+                yield item['data']
+
+        logger.debug(f"Saving session after streaming for {session_id}")
+        save_session(session_id, agent.messages)
+        logger.debug(f"Streamed {chunk_count} chunks for session {session_id}")
+    except Exception as e:
+        logger.error(f"Error during streaming for session {session_id}: {str(e)}", exc_info=True)
+        yield f"\nError: {str(e)}"
 
 @app.post('/invoke-streaming')
-async def get_invoke_streaming(request: PromptRequest):
+async def get_invoke_streaming(request: PromptRequest, auth: HTTPAuthorizationCredentials = Depends(verify_api_key)):
     """Endpoint to stream the summary as it comes it, not all at once at the end."""
+    start_time = time.time()
+    prompt = request.prompt
+    session_id = request.session_id
+
+    logger.info(f"Received streaming request for session {session_id}")
+
     try:
-        prompt = request.prompt
-        session_id = request.session_id
         if not prompt:
+            logger.warning(f"No prompt provided in streaming request for session {session_id}")
             raise HTTPException(status_code=400, detail="No prompt provided")
 
-        return StreamingResponse(
-            run_agent_and_stream_response(prompt,session_id),
+        logger.debug(f"Starting streaming response generation for session {session_id}")
+        response = StreamingResponse(
+            run_agent_and_stream_response(prompt, session_id),
             media_type="text/plain"
         )
+
+        elapsed_time = time.time() - start_time
+        logger.info(f"Initiated streaming response for session {session_id} in {elapsed_time:.2f} seconds")
+        return response
     except Exception as e:
+        logger.error(f"Error processing streaming request for session {session_id}: {str(e)}", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
+
+@app.middleware("http")
+async def log_requests(request: Request, call_next):
+    """Middleware to log all incoming requests and responses"""
+    start_time = time.time()
+
+    # Get client IP and request details
+    client_host = request.client.host if request.client else "unknown"
+    method = request.method
+    url = str(request.url)
+
+    request_id = f"{int(time.time() * 1000)}-{os.urandom(4).hex()}"
+    logger.info(f"Request {request_id} started: {method} {url} from {client_host}")
+
+    # Process the request
+    try:
+        response = await call_next(request)
+        elapsed_time = time.time() - start_time
+        logger.info(f"Request {request_id} completed: {response.status_code} in {elapsed_time:.3f} seconds")
+        return response
+    except Exception as e:
+        elapsed_time = time.time() - start_time
+        logger.error(f"Request {request_id} failed: {str(e)} in {elapsed_time:.3f} seconds", exc_info=True)
+        raise
 
 if __name__ == '__main__':
     # Get port from environment variable or default to 8000
     port = int(os.environ.get('PORT', 8000))
+    logger.info(f"Starting application server on port {port}")
     uvicorn.run(app, host='0.0.0.0', port=port)
+

@@ -10,3 +10,4 @@ cdk.out/
 # Virtual environments
 .venv
 .env
+lib/

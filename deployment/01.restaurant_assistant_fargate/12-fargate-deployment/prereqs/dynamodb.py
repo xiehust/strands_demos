@@ -77,7 +77,7 @@ class AmazonDynamoDB:
                 Overwrite=True
             )
     
-    def create_dynamodb_2(self,  kb_name: str, table_name: str, pk_item: str,):
+    def create_dynamodb_2(self, kb_name: str, table_name: str, pk_item: str, ttl_attribute: str = "ttl"):
         try:
             table = self._dynamodb_resource.create_table(
                 TableName=table_name,
@@ -94,6 +94,17 @@ class AmazonDynamoDB:
             print(f'Creating table {table_name}...')
             table.wait_until_exists()
             print(f'Table {table_name} created successfully!')
+            
+            # 启用TTL
+            self._dynamodb_client.update_time_to_live(
+                TableName=table_name,
+                TimeToLiveSpecification={
+                    'Enabled': True,
+                    'AttributeName': ttl_attribute
+                }
+            )
+            print(f'TTL enabled on table {table_name} using attribute {ttl_attribute}')
+            
             self._smm_client.put_parameter(
                 Name=f'{kb_name}-session-table-name',
                 Description=f'{kb_name} table name',
@@ -103,6 +114,17 @@ class AmazonDynamoDB:
             )
         except self._dynamodb_client.exceptions.ResourceInUseException:
             print(f"Table {table_name} already exists, skipping table creation step")
+            
+            # 对于已存在的表，尝试启用TTL
+            self._dynamodb_client.update_time_to_live(
+                TableName=table_name,
+                TimeToLiveSpecification={
+                    'Enabled': True,
+                    'AttributeName': ttl_attribute
+                }
+            )
+            print(f'TTL enabled on existing table {table_name} using attribute {ttl_attribute}')
+            
             self._smm_client.put_parameter(
                 Name=f'{kb_name}-session-table-name',
                 Description=f'{kb_name} table name',
@@ -111,10 +133,10 @@ class AmazonDynamoDB:
                 Overwrite=True
             )
 
-    def delete_dynamodb_table(self, kb_name, table_name):
+
+    def delete_dynamodb_table(self,  table_name, parameter):
         """
         Delete the dynamoDB table and its parameter in parameter store
-            kb_name: Knowledge base name for getting parameter name
             table_name: table name
         """
         # Delete DynamoDB table
@@ -125,7 +147,7 @@ class AmazonDynamoDB:
             waiter.wait(TableName=table_name)
             print(f"Table {table_name} has been deleted.")
             self._smm_client.delete_parameter(
-                Name=f'{kb_name}-table-name'
+                Name=parameter
             )
 
         except Exception as e:
@@ -159,11 +181,16 @@ if __name__ == '__main__':
             data['knowledge_base_name'],
             data['session_table_name'],
             data['session_pk_item'],
+            'ttl'
         )
         print(f"Table Name: {data['session_table_name']}")
         
     if args.mode == "delete":
         dynamodb.delete_dynamodb_table(
-            data['knowledge_base_name'],
-            data['table_name']
+            data['table_name'],
+            f'{data['knowledge_base_name']}-table-name'
+        )        
+        dynamodb.delete_dynamodb_table(
+            data['session_table_name'],
+            f'{data['knowledge_base_name']}-session-table-name'
         )
