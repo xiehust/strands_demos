@@ -1,0 +1,8 @@
+knowledge_base_name: 'restaurant-assistant'
+knowledge_base_description: 'bedrock-allow'
+kb_files_path: 'kb_files'
+table_name: 'restaurant-assistant-bookings'
+pk_item: 'booking_id'
+sk_item: 'restaurant_name'
+session_table_name: 'restaurant-assistant-sessions'
+session_pk_item : 'session_id'

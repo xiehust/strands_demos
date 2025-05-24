@@ -1,0 +1,64 @@
+{
+  "workflow_id": "ai_agent_research",
+  "created_at": "2025-05-20T03:59:07.100798+00:00",
+  "status": "completed",
+  "tasks": [
+    {
+      "task_id": "info_collection",
+      "description": "Collect information and data about current AI Agent technology trends",
+      "system_prompt": "Search for the latest information on AI Agent technology trends, including market growth, key players, technological developments, and common applications. Focus on current trends and future predictions.",
+      "priority": 3
+    },
+    {
+      "task_id": "data_analysis",
+      "description": "Analyze the collected data to identify key trends and findings in AI Agent technology",
+      "dependencies": [
+        "info_collection"
+      ],
+      "system_prompt": "Analyze the information collected about AI Agent technology trends. Identify patterns, key developments, major challenges, and opportunities in the field. Organize findings into clear categories.",
+      "priority": 3
+    },
+    {
+      "task_id": "report_summary",
+      "description": "Create a concise summary report of the key findings on AI Agent technology trends",
+      "dependencies": [
+        "data_analysis"
+      ],
+      "system_prompt": "Create a well-structured, concise report summarizing the key findings about AI Agent technology trends. Include an executive summary, key trends, market analysis, technological innovations, and future outlook.",
+      "priority": 3
+    },
+    {
+      "task_id": "chinese_translation",
+      "description": "Translate the summary report on AI Agent technology trends into Chinese",
+      "dependencies": [
+        "report_summary"
+      ],
+      "system_prompt": "Translate the AI Agent technology trends report into Chinese, ensuring to maintain the structure of the original report while adapting appropriately for Chinese language conventions.",
+      "priority": 3
+    }
+  ],
+  "current_task_index": 0,
+  "task_results": {
+    "info_collection": {
+      "status": "completed",
+      "result": [],
+      "completed_at": "2025-05-20T03:59:38.220195+00:00"
+    },
+    "data_analysis": {
+      "status": "completed",
+      "result": [],
+      "completed_at": "2025-05-20T04:00:02.548430+00:00"
+    },
+    "report_summary": {
+      "status": "completed",
+      "result": [],
+      "completed_at": "2025-05-20T04:00:21.317608+00:00"
+    },
+    "chinese_translation": {
+      "status": "completed",
+      "result": [],
+      "completed_at": "2025-05-20T04:00:45.119014+00:00"
+    }
+  },
+  "parallel_execution": true
+}

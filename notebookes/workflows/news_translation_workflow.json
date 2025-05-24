@@ -1,0 +1,64 @@
+{
+  "workflow_id": "news_translation_workflow",
+  "created_at": "2025-05-20T05:50:28.096395+00:00",
+  "status": "completed",
+  "tasks": [
+    {
+      "task_id": "translate_to_chinese",
+      "description": "Translate news content to Chinese",
+      "system_prompt": "You are an AI tech translator. Translate the provided news content from English to Chinese, maintaining the original meaning, tone, and technical accuracy.",
+      "priority": 3
+    },
+    {
+      "task_id": "review_translation",
+      "description": "Review translation and provide feedbacks",
+      "system_prompt": "You are a language expert specialized in English-Chinese translations. Review the provided translation and give detailed feedback on accuracy, naturalness, and technical terminology.",
+      "dependencies": [
+        "translate_to_chinese"
+      ],
+      "priority": 3
+    },
+    {
+      "task_id": "refine_translation",
+      "description": "Refine the translation based on feedbacks",
+      "system_prompt": "You are a professional translator. Refine the Chinese translation based on the feedback provided, improving accuracy and naturalness while ensuring technical terminology is correctly translated.",
+      "dependencies": [
+        "review_translation"
+      ],
+      "priority": 3
+    },
+    {
+      "task_id": "generate_insights",
+      "description": "Generate 3~5 insights",
+      "system_prompt": "Based on the refined translation, generate 3-5 key insights from the content that would be valuable for Chinese-speaking readers.",
+      "dependencies": [
+        "refine_translation"
+      ],
+      "priority": 3
+    }
+  ],
+  "current_task_index": 0,
+  "task_results": {
+    "translate_to_chinese": {
+      "status": "completed",
+      "result": [],
+      "completed_at": "2025-05-20T05:51:52.689112+00:00"
+    },
+    "review_translation": {
+      "status": "completed",
+      "result": [],
+      "completed_at": "2025-05-20T05:51:56.438794+00:00"
+    },
+    "refine_translation": {
+      "status": "completed",
+      "result": [],
+      "completed_at": "2025-05-20T05:52:00.285031+00:00"
+    },
+    "generate_insights": {
+      "status": "completed",
+      "result": [],
+      "completed_at": "2025-05-20T05:52:04.788669+00:00"
+    }
+  },
+  "parallel_execution": true
+}
