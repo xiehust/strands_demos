@@ -15,6 +15,7 @@ def request_confirm(date: str, hour: str, restaurant_name:str, guest_name: str, 
         num_guests(int): The number of guests for the booking
 
     Returns:
+        booking details
     """
     return f"""Please confirm the booking information with the customer.
 booking information:
