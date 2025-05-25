@@ -135,6 +135,9 @@ def get_agent(session_id:str):
     model = BedrockModel(
         model_id="us.anthropic.claude-3-7-sonnet-20250219-v1:0",
         max_tokens=16000,
+        temperature=0.1,
+        cache_tools="default",
+        cache_prompt="default",
         boto_client_config=Config(
            read_timeout=900,
            connect_timeout=900,

@@ -8,7 +8,7 @@ dynamodb_resource = boto3.resource('dynamodb')
 
 def save_session(session_id:str, messages:[],ttl_days=7):
     """
-    保存session
+    保存session`
     :param session_id: session id
     :param messages: session messages
     :param ttl_days: session ttl days
