@@ -218,7 +218,6 @@ class A2AClientManager:
     
     def invoke_remote_agent_streaming_sync(self, query: str, agent_name: str) -> str:
         """A fully synchronous method to invoke remote agents."""
-        import nest_asyncio
         nest_asyncio.apply()
         return asyncio.run(self.invoke_remote_agent_streaming(query, agent_name))
 
