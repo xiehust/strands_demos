@@ -13,6 +13,7 @@ import traceback
 from strands import tool
 from strands.agent.conversation_manager import SlidingWindowConversationManager
 import asyncio
+import nest_asyncio
 
 
 MODEL = "us.anthropic.claude-3-5-sonnet-20241022-v2:0"
@@ -78,8 +79,6 @@ def print_json_response(response: Any, description: str) -> None:
         print(f"{response.model_dump(mode='json', exclude_none=True)}\n")
 
 def generate_function(function_name, desc):
-    
-    # Create function code string
     code = f"""
 @tool
 def {function_name}(task: str) -> str:
@@ -103,7 +102,6 @@ def {function_name}(task: str) -> str:
     
     # Add function to global namespace
     globals()[function_name] = local_vars[function_name]
-    
     return local_vars[function_name]
 
 
@@ -117,7 +115,7 @@ class LeadAgent:
         
     def get_agent(self):
         agent = Agent(model=MODEL,
-                      max_parallel_tools=1,#由于tools里使用了asyncio.run把a2a的异步调用转成同步调用，这里必须禁用并行，否则会新起子线程，在子线程中使用asyncio.run导致错误asyncio.locks.Event object is bound to a different event loop
+                      max_parallel_tools=1,#由于tools里使用了asyncio.run把a2a的异步调用转成同步调用，这里必须禁用并行，否则会导致错误asyncio.locks.Event object is bound to a different event loop
                     messages=self.messages,
                     conversation_manager=self.conversation_manager,
                     system_prompt="""You are a coodinator agent, you can communicate with other remote agents to resolve problems.
@@ -147,6 +145,25 @@ class LeadAgent:
 
         except Exception as e:
             print(colored(str(e),"red"),flush=True)
+
+AGENT_DESC_TEMPLATE = """
+{description}
+
+## Description of agent skills
+{skills}
+"""
+
+SKILL_DESC_TEMPLATE="""### skill[{idx}]:
+- Skill name:
+{skill_name}
+
+- Description:
+{skill_desc}
+
+- Examples:
+{skill_examples}
+"""
+
 
 class A2AClientManager:
     
@@ -184,7 +201,19 @@ class A2AClientManager:
     def _generate_tools(self):
         """generate tools that invoke a2a remote agents as tools."""
         for agent_card in self.agent_cards:
-            self.tools.append(generate_function(self.name_normalize(agent_card.name), agent_card.description))
+            agent_skills = []
+            for id,skill in enumerate(agent_card.skills):
+                desc = SKILL_DESC_TEMPLATE.format(
+                    idx=id+1,
+                    skill_name=skill.name,
+                    skill_desc=skill.description,
+                    skill_examples=skill.examples,
+                )
+                agent_skills.append(desc)
+            function_desc = AGENT_DESC_TEMPLATE.format(description=agent_card.description,
+                                                       skills="\n".join(agent_skills))
+            print(f"function_desc: {function_desc}")
+            self.tools.append(generate_function(self.name_normalize(agent_card.name), function_desc))
         return self.tools
     
     def invoke_remote_agent_streaming_sync(self, query: str, agent_name: str) -> str:
@@ -192,7 +221,7 @@ class A2AClientManager:
         import nest_asyncio
         nest_asyncio.apply()
         return asyncio.run(self.invoke_remote_agent_streaming(query, agent_name))
-        
+
         
     async def invoke_remote_agent_streaming(self, query:str, agent_name: str) -> str:
         """a single-turn streaming request to remote agent."""
@@ -225,27 +254,29 @@ async def main() -> None:
     
     user_queries = [
         "what is result of 2 * sin(pi/4) + log(e**2)",
-        "What pricing model does Amazon Bedrock Support?",
+        "what time is now in beijing?",
         "How to integrate AWS Lambda with SNS?",
         "What are the IAM policies that AWS lambda should have?"
     ]
     
-    AGENT_URLs = ["http://localhost:10000","http://localhost:10001"]
+    AGENT_URLs = ["http://localhost:10000",
+                #   "http://localhost:10001",
+                  "http://localhost:10002"]
     
     a2aclient_manager = A2AClientManager(AGENT_URLs)
     
     # 把remote agent，转化成tools
     tools = await a2aclient_manager.init_a2aclients()
 
-    # 测试remote agent
-    # a2aclient_manager.invoke_remote_agent_streaming_sync(user_queries[0], "calculator")
-
     # 创建agent
     lead_agent = LeadAgent(tools=tools).get_agent()
+    
+    # 测试remote agent
     lead_agent(user_queries[0])
+    lead_agent(user_queries[1])
     
-    
-    
+    # a2aclient_manager.invoke_remote_agent_streaming_sync(user_queries[0], "calculator")
+
     # 关闭连接
     await close_httpx_client()
 

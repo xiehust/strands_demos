@@ -17,7 +17,7 @@ from calc_agent_executor import StrandsAgentExecutor
 
 @click.command()
 @click.option("--host", "host", default="localhost")
-@click.option("--port", "port", default=10001)
+@click.option("--port", "port", default=10002)
 def main(host: str, port: int):
     request_handler = DefaultRequestHandler(
         agent_executor=StrandsAgentExecutor(),
@@ -43,15 +43,25 @@ def get_agent_card(host: str, port: int):
             "What is result of 2 * sin(pi/4) + log(e**2)?",
         ],
     )
+    skill_2 = AgentSkill(
+        id="current_time",
+        name="current_time",
+        description="returns the current date and time in ISO 8601 format (e.g., 2023-04-15T14:32:16.123456+00:00) "
+    "for the specified timezone. If no timezone is provided, the value from the DEFAULT_TIMEZONE",
+        tags=["time"],
+        examples=[
+            "What is current time of beijing",
+        ],
+    )
     return AgentCard(
-        name="calculator_and_current_time",
-        description="calculator and current time",
+        name="calculator_and_time",
+        description="get calculator and current time",
         url=f"http://{host}:{port}/",
         version="1.0.0",
         defaultInputModes=CalcAgent.SUPPORTED_CONTENT_TYPES,
         defaultOutputModes=CalcAgent.SUPPORTED_CONTENT_TYPES,
         capabilities=capabilities,
-        skills=[skill_1],
+        skills=[skill_1,skill_2],
         authentication=AgentAuthentication(schemes=["public"]),
     )
     
