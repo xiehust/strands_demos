@@ -274,9 +274,6 @@ class A2AClientManager:
         """a single-turn streaming request to remote agent."""
         send_payload = create_send_message_payload(text=query)
 
-        # a2aclient = self.a2aclient_pool.get(agent_name)
-        # if a2aclient is None:
-        #     raise Exception(f"Agent {agent_name} not found")
         agent_url = self.a2aclient_pool.get(agent_name)
         async with httpx.AsyncClient(timeout=120) as httpx_client:
             a2aclient = await A2AClient.get_client_from_agent_card_url(
