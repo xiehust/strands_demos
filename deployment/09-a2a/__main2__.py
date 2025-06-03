@@ -1,6 +1,5 @@
 import click
-from agent import StrandAgent
-from calc_agent import CalcAgent
+from calc_agent import WeatherAgent
 
 from a2a.server.apps import A2AStarletteApplication
 from a2a.server.request_handlers import DefaultRequestHandler
@@ -12,7 +11,7 @@ from a2a.types import (
     AgentSkill,
 )
 
-from calc_agent_executor import StrandsAgentExecutor
+from agent_executor import StrandsAgentExecutor
 
 
 @click.command()
@@ -20,7 +19,7 @@ from calc_agent_executor import StrandsAgentExecutor
 @click.option("--port", "port", default=10001)
 def main(host: str, port: int):
     request_handler = DefaultRequestHandler(
-        agent_executor=StrandsAgentExecutor(),
+        agent_executor=StrandsAgentExecutor(WeatherAgent()),
         task_store=InMemoryTaskStore(),
     )
 
@@ -35,28 +34,31 @@ def get_agent_card(host: str, port: int):
     """Returns the Agent Card for the Currency Agent."""
     capabilities = AgentCapabilities(streaming=True, pushNotifications=True)
     skill_1 = AgentSkill(
-        id="calculator",
-        name="calculator",
-        description="Performing mathematical operations, symbolic math, equation solving.",
-        tags=["calculator"],
+        id="weather_forecast",
+        name="weather_forecast",
+        description="""It can:
+1. Make HTTP requests to the National Weather Service API
+2. Process and display weather forecast data
+3. Provide weather information for locations in the United States""",
+        tags=["weather_forecast"],
         examples=[
-            "What is result of 2 * sin(pi/4) + log(e**2)?",
+            "What's the weather like in Seattle?",
+            "Will it rain tomorrow in Miami?",
+            "Compare the temperature in New York and Chicago this weekend"
         ],
     )
     return AgentCard(
-        name="calculator_and_current_time",
-        description="calculator and current time",
+        name="weather_forecast",
+        description="A weather assistant with HTTP capabilities.",
         url=f"http://{host}:{port}/",
         version="1.0.0",
-        defaultInputModes=CalcAgent.SUPPORTED_CONTENT_TYPES,
-        defaultOutputModes=CalcAgent.SUPPORTED_CONTENT_TYPES,
+        defaultInputModes=WeatherAgent.SUPPORTED_CONTENT_TYPES,
+        defaultOutputModes=WeatherAgent.SUPPORTED_CONTENT_TYPES,
         capabilities=capabilities,
         skills=[skill_1],
         authentication=AgentAuthentication(schemes=["public"]),
     )
     
-
-
 
 if __name__ == "__main__":
     main()

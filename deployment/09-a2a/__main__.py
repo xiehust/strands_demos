@@ -11,7 +11,7 @@ from a2a.types import (
     AgentSkill,
 )
 
-from calc_agent_executor import StrandsAgentExecutor
+from agent_executor import StrandsAgentExecutor
 
 
 @click.command()
@@ -19,7 +19,7 @@ from calc_agent_executor import StrandsAgentExecutor
 @click.option("--port", "port", default=10000)
 def main(host: str, port: int):
     request_handler = DefaultRequestHandler(
-        agent_executor=StrandsAgentExecutor(),
+        agent_executor=StrandsAgentExecutor(StrandAgent()),
         task_store=InMemoryTaskStore(),
     )
 

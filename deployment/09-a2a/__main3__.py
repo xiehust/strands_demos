@@ -1,5 +1,4 @@
 import click
-from agent import StrandAgent
 from calc_agent import CalcAgent
 
 from a2a.server.apps import A2AStarletteApplication
@@ -12,7 +11,7 @@ from a2a.types import (
     AgentSkill,
 )
 
-from calc_agent_executor import StrandsAgentExecutor
+from agent_executor import StrandsAgentExecutor
 
 
 @click.command()
@@ -20,7 +19,7 @@ from calc_agent_executor import StrandsAgentExecutor
 @click.option("--port", "port", default=10002)
 def main(host: str, port: int):
     request_handler = DefaultRequestHandler(
-        agent_executor=StrandsAgentExecutor(),
+        agent_executor=StrandsAgentExecutor(CalcAgent()),
         task_store=InMemoryTaskStore(),
     )
 

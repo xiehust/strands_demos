@@ -1,4 +1,4 @@
-from agent import StrandAgent
+# from agent import StrandAgent
 from typing_extensions import override
 
 from a2a.server.agent_execution import AgentExecutor, RequestContext
@@ -17,8 +17,8 @@ from a2a.utils.errors import ServerError
 class StrandsAgentExecutor(AgentExecutor):
     """Currency AgentExecutor Example."""
 
-    def __init__(self):
-        self.agent = StrandAgent()
+    def __init__(self,agent):
+        self.agent = agent
 
     @override
     async def execute(

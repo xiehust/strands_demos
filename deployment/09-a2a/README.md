@@ -8,8 +8,9 @@
 
 ### An example Strands agent that helps with searching AWS documentation.
 1. Start the A2A server using `uv run __main__.py`.
-2. Run the test client `uv run test_client.py`.
 
+### An example Strands agent that provides weather forcast in US
+1. Start the A2A server using `uv run __main2__.py`.
 
 ### An example Strands agent that work as calculator and current time
 1. Start the A2A server using `uv run __main3__.py`.
