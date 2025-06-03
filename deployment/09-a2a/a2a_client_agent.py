@@ -14,12 +14,10 @@ from strands import tool
 from strands.agent.conversation_manager import SlidingWindowConversationManager
 import asyncio
 import nest_asyncio
-
-
 MODEL = "us.anthropic.claude-3-5-sonnet-20241022-v2:0"
 
 httpx_client = None
-a2aclient_manager = None
+a2a_manager = None
 
 
 import base64
@@ -78,6 +76,56 @@ def print_json_response(response: Any, description: str) -> None:
     else:
         print(f"{response.model_dump(mode='json', exclude_none=True)}\n")
 
+
+def generate_function_2(function_name, desc):
+    """Generate a tool function that properly handles async/sync boundaries."""
+    
+    async def async_dynamic_func(task: str) -> str:
+        """Async implementation of the function."""
+        global a2a_manager
+        if a2a_manager is None:
+            raise Exception("a2a_manager is None")
+        
+        try:
+            # 直接调用异步方法
+            return await a2a_manager.invoke_remote_agent_streaming(task, function_name)
+        except Exception as e:
+            return f"Error invoking {function_name}: {str(e)}"
+    
+    def dynamic_func(task: str) -> str:
+        """Synchronous wrapper that properly handles the event loop."""
+        import asyncio
+        
+        # 获取当前事件循环或创建新循环
+        try:
+            loop = asyncio.get_event_loop()
+            if loop.is_closed():
+                loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(loop)
+        except RuntimeError:
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+        
+        # 执行异步函数
+        if loop.is_running():
+            # 如果循环已运行(使用nest_asyncio的场景)
+            return asyncio.run_coroutine_threadsafe(async_dynamic_func(task), loop).result()
+        else:
+            # 标准执行方式
+            return loop.run_until_complete(async_dynamic_func(task))
+    
+    # 设置函数属性
+    dynamic_func.__name__ = function_name
+    dynamic_func.__qualname__ = function_name
+    dynamic_func.__doc__ = desc
+    
+    # 应用工具装饰器
+    decorated_func = tool(dynamic_func)
+    globals()[function_name] = decorated_func
+    
+    return decorated_func
+
+
 def generate_function(function_name, desc):
     code = f"""
 @tool
@@ -88,11 +136,11 @@ def {function_name}(task: str) -> str:
     Returns:
         str, the result of the task.
     \"""
-    from __main__ import a2aclient_manager
-    if a2aclient_manager is None:
-        raise Exception("a2aclient_manager is None")
+    from __main__ import a2a_manager
+    if a2a_manager is None:
+        raise Exception("a2a_manager is None")
     
-    result = a2aclient_manager.invoke_remote_agent_streaming_sync(task, "{function_name}") 
+    result = a2a_manager.invoke_remote_agent_streaming_sync(task, "{function_name}") 
     print(f"result:{{result}}")
     return result
 """
@@ -112,10 +160,10 @@ class LeadAgent:
         self.conversation_manager = SlidingWindowConversationManager(
             window_size=10,  # Maximum number of messages to keep
         )
-        
+    
+    @property
     def get_agent(self):
         agent = Agent(model=MODEL,
-                      max_parallel_tools=1,#由于tools里使用了asyncio.run把a2a的异步调用转成同步调用，这里必须禁用并行，否则会导致错误asyncio.locks.Event object is bound to a different event loop
                     messages=self.messages,
                     conversation_manager=self.conversation_manager,
                     system_prompt="""You are a coodinator agent, you can communicate with other remote agents to resolve problems.
@@ -187,10 +235,10 @@ class A2AClientManager:
                 agent_card = await agent_card_client.get_agent_card()
                 print(f"Found agent card: {agent_card}")
                 self.agent_cards.append(agent_card)
-                a2aclient = await A2AClient.get_client_from_agent_card_url(
-                    httpx_client, agent_url
-                )
-                self.a2aclient_pool[self.name_normalize(agent_card.name)] = a2aclient
+                # a2aclient = await A2AClient.get_client_from_agent_card_url(
+                #     httpx_client, agent_url
+                # )
+                self.a2aclient_pool[self.name_normalize(agent_card.name)] = agent_url
             except Exception as e:
                 print(f"Error initializing A2AClient: {e}")
         # generate tools
@@ -226,18 +274,22 @@ class A2AClientManager:
         """a single-turn streaming request to remote agent."""
         send_payload = create_send_message_payload(text=query)
 
-        a2aclient = self.a2aclient_pool.get(agent_name)
-        if a2aclient is None:
-            raise Exception(f"Agent {agent_name} not found")
-        
-        artifact = ""
-        stream_response = a2aclient.send_message_streaming(SendStreamingMessageRequest(params=MessageSendParams(**send_payload)))
-        async for chunk in stream_response:
-            chunk = json.loads(conver_response_to_json_str(chunk))
-            if "final" in chunk["result"] and chunk["result"].get("final") == False:
-                print(colored(chunk["result"]["status"]["message"]["parts"][0]["text"],"green"),end="",flush=True)
-            elif "artifact" in chunk["result"]:
-                artifact= chunk["result"]["artifact"]["parts"][0]["text"]
+        # a2aclient = self.a2aclient_pool.get(agent_name)
+        # if a2aclient is None:
+        #     raise Exception(f"Agent {agent_name} not found")
+        agent_url = self.a2aclient_pool.get(agent_name)
+        async with httpx.AsyncClient(timeout=120) as httpx_client:
+            a2aclient = await A2AClient.get_client_from_agent_card_url(
+                httpx_client, agent_url
+            )
+            artifact = ""
+            stream_response = a2aclient.send_message_streaming(SendStreamingMessageRequest(params=MessageSendParams(**send_payload)))
+            async for chunk in stream_response:
+                chunk = json.loads(conver_response_to_json_str(chunk))
+                if "final" in chunk["result"] and chunk["result"].get("final") == False:
+                    print(colored(chunk["result"]["status"]["message"]["parts"][0]["text"],"green"),end="",flush=True)
+                elif "artifact" in chunk["result"]:
+                    artifact= chunk["result"]["artifact"]["parts"][0]["text"]
                 
         return artifact
 
@@ -249,32 +301,33 @@ def test_generate_function():
     
 async def main() -> None:
     import time
-    global a2aclient_manager
+    global a2a_manager
     
     user_queries = [
-        "what is result of 2 * sin(pi/4) + log(e**2)",
+        "what is result of 2 * sin(pi/5.1) + log(e**2.1)",
         "what time is now in beijing?",
         "How to integrate AWS Lambda with SNS?",
         "What are the IAM policies that AWS lambda should have?"
     ]
     
-    AGENT_URLs = ["http://localhost:10000",
+    AGENT_URLs = [
+        # "http://localhost:10000",
                 #   "http://localhost:10001",
                   "http://localhost:10002"]
     
-    a2aclient_manager = A2AClientManager(AGENT_URLs)
+    a2a_manager = A2AClientManager(AGENT_URLs)
     
     # 把remote agent，转化成tools
-    tools = await a2aclient_manager.init_a2aclients()
+    tools = await a2a_manager.init_a2aclients()
 
     # 创建agent
-    lead_agent = LeadAgent(tools=tools).get_agent()
+    lead_agent = LeadAgent(tools=tools).get_agent
     
     # 测试remote agent
     lead_agent(user_queries[0])
     lead_agent(user_queries[1])
     
-    # a2aclient_manager.invoke_remote_agent_streaming_sync(user_queries[0], "calculator")
+    # a2a_manager.invoke_remote_agent_streaming_sync(user_queries[0], "calculator")
 
     # 关闭连接
     await close_httpx_client()
