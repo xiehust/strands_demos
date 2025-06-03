@@ -10,5 +10,5 @@ dependencies = [
     "a2a-sdk>=0.2.1a1",
     "mcp[cli]>=1.9.0",
     "strands-agents>=0.1.0",
-    "strands-agents-tools>=0.1.0",
+    "strands-agents-tools>=0.1.4",
 ]

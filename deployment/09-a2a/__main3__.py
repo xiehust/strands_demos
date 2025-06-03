@@ -12,6 +12,10 @@ from a2a.types import (
 )
 
 from agent_executor import StrandsAgentExecutor
+from dotenv import load_dotenv
+import os 
+load_dotenv()
+
 
 
 @click.command()
@@ -52,15 +56,24 @@ def get_agent_card(host: str, port: int):
             "What is current time of beijing",
         ],
     )
+    skill_3 = AgentSkill(
+        id="shell",
+        name="shell",
+        description="Interactive shell with PTY support for real-time command execution and interaction.",
+        tags=["shell"],
+        examples=[
+            "list current file path",
+        ],
+    )
     return AgentCard(
-        name="calculator_and_time",
-        description="get calculator and current time",
+        name="utils_agent",
+        description="get calculator and current time, and execute shell commands",
         url=f"http://{host}:{port}/",
         version="1.0.0",
         defaultInputModes=CalcAgent.SUPPORTED_CONTENT_TYPES,
         defaultOutputModes=CalcAgent.SUPPORTED_CONTENT_TYPES,
         capabilities=capabilities,
-        skills=[skill_1,skill_2],
+        skills=[skill_1,skill_2,skill_3],
         authentication=AgentAuthentication(schemes=["public"]),
     )
     

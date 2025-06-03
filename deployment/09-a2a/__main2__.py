@@ -48,7 +48,7 @@ def get_agent_card(host: str, port: int):
         ],
     )
     return AgentCard(
-        name="weather_forecast",
+        name="weather_agent",
         description="A weather assistant with HTTP capabilities.",
         url=f"http://{host}:{port}/",
         version="1.0.0",

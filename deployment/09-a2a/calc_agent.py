@@ -1,15 +1,17 @@
 from strands import Agent
-from strands_tools import calculator,current_time,http_request
+from strands_tools import calculator,current_time,http_request,shell
 import asyncio
 from strands.models import BedrockModel
+import os
 
+os.environ["BYPASS_TOOL_CONSENT"] = "true"
 class CalcAgent:
     SUPPORTED_CONTENT_TYPES = ["text", "text/plain"]
     
     def __init__(self):
         self.agent = Agent(
                     model="us.amazon.nova-pro-v1:0",
-                    tools=[calculator,current_time],
+                    tools=[calculator,current_time,shell],
                     callback_handler=None,
                 )        
         

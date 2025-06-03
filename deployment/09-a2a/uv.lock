@@ -62,7 +62,7 @@ requires-dist = [
     { name = "mcp", extras = ["cli"], specifier = ">=1.9.0" },
     { name = "nest-asyncio" },
     { name = "strands-agents", specifier = ">=0.1.0" },
-    { name = "strands-agents-tools", specifier = ">=0.1.0" },
+    { name = "strands-agents-tools", specifier = ">=0.1.4" },
     { name = "termcolor" },
 ]
 
@@ -720,7 +720,7 @@ wheels = [
 
 [[package]]
 name = "strands-agents-tools"
-version = "0.1.0"
+version = "0.1.4"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "aws-requests-auth" },
@@ -734,11 +734,12 @@ dependencies = [
     { name = "strands-agents" },
     { name = "sympy" },
     { name = "tenacity" },
+    { name = "tzdata", marker = "sys_platform == 'win32'" },
     { name = "watchdog" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/2a/d5/34d41d687bd080310edc45dfcf7d24e6ff43533d9830e4616579f9e6ee63/strands_agents_tools-0.1.0.tar.gz", hash = "sha256:93eda3c10a61d7d0be3cfbf493b9060e30819e8f0be3c78eea405bad81726982", size = 41278656 }
+sdist = { url = "https://files.pythonhosted.org/packages/be/69/fc90583cac2d28f2381a64b377737a11baecd6bd321b6138238e8a2b5d4b/strands_agents_tools-0.1.4.tar.gz", hash = "sha256:1c3d1c13627f3dd7421b575f435d21da3de127173168829e895d066a87a1d2a0", size = 215728 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/90/9a/3c712b950186af7f51a473d733761c5df39c8cca30a82d9658958bfeae28/strands_agents_tools-0.1.0-py3-none-any.whl", hash = "sha256:b72eb9f05c7fdcb22ba9381c1ffaac2e4434c536ac809dc33efd829673ccd646", size = 147986 },
+    { url = "https://files.pythonhosted.org/packages/1d/e5/5969e729ffbab6dc27008a711911857fdd53a1d6599e2e0e9c8f43c690a5/strands_agents_tools-0.1.4-py3-none-any.whl", hash = "sha256:89a7b4edccb0045429e7de13b32e0cb275d7e59e6685066a1cb40fedd3f757d5", size = 154731 },
 ]
 
 [[package]]
@@ -805,6 +806,15 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/82/5c/e6082df02e215b846b4b8c0b887a64d7d08ffaba30605502639d44c06b82/typing_inspection-0.4.0.tar.gz", hash = "sha256:9765c87de36671694a67904bf2c96e395be9c6439bb6c87b5142569dcdd65122", size = 76222 }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/31/08/aa4fdfb71f7de5176385bd9e90852eaf6b5d622735020ad600f2bab54385/typing_inspection-0.4.0-py3-none-any.whl", hash = "sha256:50e72559fcd2a6367a19f7a7e610e6afcb9fac940c650290eed893d61386832f", size = 14125 },
+]
+
+[[package]]
+name = "tzdata"
+version = "2025.2"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/95/32/1a225d6164441be760d75c2c42e2780dc0873fe382da3e98a2e1e48361e5/tzdata-2025.2.tar.gz", hash = "sha256:b60a638fcc0daffadf82fe0f57e53d06bdec2f36c4df66280ae79bce6bd6f2b9", size = 196380 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/5c/23/c7abc0ca0a1526a0774eca151daeb8de62ec457e77262b66b359c3c7679e/tzdata-2025.2-py2.py3-none-any.whl", hash = "sha256:1a403fada01ff9221ca8044d701868fa132215d84beb92242d9acd2147f667a8", size = 347839 },
 ]
 
 [[package]]
