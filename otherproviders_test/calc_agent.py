@@ -19,9 +19,9 @@ MODEL = OpenAIModel(
         "base_url": "https://api.siliconflow.cn/v1",
     },
     # model_id="Pro/deepseek-ai/DeepSeek-R1",
-    # model_id = "Pro/deepseek-ai/DeepSeek-V3",
+    model_id = "Pro/deepseek-ai/DeepSeek-V3",
     # model_id = "Qwen/Qwen3-235B-A22B",
-    model_id = "Qwen/Qwen3-30B-A3B",
+    # model_id = "Qwen/Qwen3-30B-A3B",
     params={
         "max_tokens": 8100,
         "temperature": 0.7,

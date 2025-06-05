@@ -5,7 +5,25 @@ from strands_tools import file_write
 import os
 import json
 import asyncio
+import os
+from dotenv import load_dotenv
+load_dotenv()
+os.environ["BYPASS_TOOL_CONSENT"] = "true"
+from strands.models.openai import OpenAIModel
 
+
+# MODEL = "us.amazon.nova-pro-v1:0"
+MODEL = OpenAIModel(
+    client_args={
+        "api_key": os.environ.get("API_KEY"),
+        "base_url": "https://api.siliconflow.cn/v1",
+    },
+    model_id="Pro/deepseek-ai/DeepSeek-R1",
+    params={
+        "max_tokens": 1000,
+        "temperature": 0.7,
+    }
+)
 
 class StrandAgent:
     SUPPORTED_CONTENT_TYPES = ["text", "text/plain"]
@@ -39,7 +57,7 @@ class StrandAgent:
                     state = json.load(f)
 
                 agent = Agent(
-                    model="us.anthropic.claude-3-5-sonnet-20241022-v2:0",
+                    model=MODEL,
                     messages=state["messages"],
                     system_prompt=state["system_prompt"],
                     tools=self.tools,
@@ -47,7 +65,7 @@ class StrandAgent:
                 )
             else:
                 agent = Agent(
-                    model="us.anthropic.claude-3-5-sonnet-20241022-v2:0",
+                    model="us.amazon.nova-pro-v1:0",
                     system_prompt="""You are a thorough AWS researcher specialized in finding accurate 
                     information online. For each question:
                     

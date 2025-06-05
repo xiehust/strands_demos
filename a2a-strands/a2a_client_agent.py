@@ -14,14 +14,33 @@ from strands import tool
 from strands.agent.conversation_manager import SlidingWindowConversationManager
 import asyncio
 import nest_asyncio
-MODEL = "us.anthropic.claude-3-5-sonnet-20241022-v2:0"
+from dotenv import load_dotenv
+import os
+import base64
+load_dotenv()
+from strands.models.openai import OpenAIModel
+
+
+MODEL = OpenAIModel(
+    client_args={
+        "api_key": os.environ.get("API_KEY"),
+        "base_url": "https://api.siliconflow.cn/v1",
+    },
+    model_id="Pro/deepseek-ai/DeepSeek-R1",
+    params={
+        "max_tokens": 1000,
+        "temperature": 0.7,
+    }
+)
+
+# MODEL = "us.anthropic.claude-3-5-sonnet-20241022-v2:0"
 
 httpx_client = None
 a2a_manager = None
 
 
-import base64
-import os
+
+
 public_key = os.environ.get("LANGFUSE_PUBLIC_KEY")
 secret_key = os.environ.get("LANGFUSE_SECRET_KEY")
 # Set up endpoint

@@ -1,0 +1,1 @@
+Amazon Bedrock pricing is based on the volume of input tokens and output tokens. Additionally, there are charges for Provisioned Throughput if purchased. For detailed pricing, refer to the [Amazon Bedrock pricing page](https://aws.amazon.com/bedrock/pricing).
