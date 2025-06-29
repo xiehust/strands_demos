@@ -6,13 +6,15 @@ from typing import List, Optional, Dict, Any
 import asyncio
 import json
 import uuid
+from uuid import uuid4
+
 from datetime import datetime
 import httpx
 import traceback
 from contextlib import asynccontextmanager
 # Import A2A client components and strands
 from a2a.client import A2AClient, A2ACardResolver
-from a2a.types import MessageSendParams, SendStreamingMessageRequest
+from a2a.types import MessageSendParams, SendStreamingMessageRequest,  SendMessageRequest
 from strands import Agent, tool
 from strands.agent.conversation_manager import SlidingWindowConversationManager
 import nest_asyncio
@@ -53,10 +55,11 @@ import os
 public_key = os.environ.get("LANGFUSE_PUBLIC_KEY")
 secret_key = os.environ.get("LANGFUSE_SECRET_KEY")
 # Set up endpoint
-otel_endpoint = str(os.environ.get("LANGFUSE_HOST")) + "/api/public/otel/v1/traces"
-auth_token = base64.b64encode(f"{public_key}:{secret_key}".encode()).decode()
-os.environ["OTEL_EXPORTER_OTLP_ENDPOINT"] = otel_endpoint
-os.environ["OTEL_EXPORTER_OTLP_HEADERS"] = f"Authorization=Basic {auth_token}"
+if public_key and secret_key:
+    otel_endpoint = str(os.environ.get("LANGFUSE_HOST")) + "/api/public/otel/v1/traces"
+    auth_token = base64.b64encode(f"{public_key}:{secret_key}".encode()).decode()
+    os.environ["OTEL_EXPORTER_OTLP_ENDPOINT"] = otel_endpoint
+    os.environ["OTEL_EXPORTER_OTLP_HEADERS"] = f"Authorization=Basic {auth_token}"
 
 # Global variables
 agent_registry: Dict[str, Dict[str, Any]] = {}
@@ -90,6 +93,15 @@ class UpdateAgentEnabledRequest(BaseModel):
     agent_id: str
     enabled: bool
 
+def print_json_response(response: Any) -> None:
+    """Helper function to print the JSON representation of a response."""
+    if hasattr(response, "root"):
+        print(f"{response.root.model_dump_json(exclude_none=True)}\n")
+        return(f"{response.root.model_dump_json(exclude_none=True)}\n")
+    else:
+        print(f"{response.model_dump(mode='json', exclude_none=True)}\n")
+        return(f"{response.model_dump(mode='json', exclude_none=True)}\n")
+        
 def create_send_message_payload(
     text: str, task_id: str | None = None, context_id: str | None = None
 ) -> dict[str, Any]:
@@ -139,8 +151,13 @@ def generate_function(function_name, desc):
                 if a2a_manager is None:
                     raise Exception("a2a_manager is None")
                 
+                 # streaming remote agent
+                # result = loop.run_until_complete(
+                #     a2a_manager.invoke_remote_agent_streaming(task, function_name)
+                # )
+                # non-streaming remote agent
                 result = loop.run_until_complete(
-                    a2a_manager.invoke_remote_agent_streaming(task, function_name)
+                    a2a_manager.invoke_remote_agent(task, function_name)
                 )
                 result_queue.put(result)
             except Exception as e:
@@ -300,14 +317,31 @@ class A2AClientManager:
         agent_tool = generate_function(function_name,desc)
         return agent_tool
 
+    def invoke_remote_agent_sync(self, query: str, agent_name: str) -> str:
+        """A fully synchronous method to invoke remote agents."""
+        nest_asyncio.apply()
+        return asyncio.run(self.invoke_remote_agent(query, agent_name))
+    
+    async def invoke_remote_agent(self, query: str, agent_name: str) -> str:
+        """A single-turn request to remote agent."""
+        send_payload = create_send_message_payload(text=query)
+        agent_url = self.a2aclient_pool.get(agent_name)
+        async with httpx.AsyncClient(timeout=120) as httpx_client:
+            a2aclient = await A2AClient.get_client_from_agent_card_url(
+                httpx_client, agent_url
+            )
+            response = await a2aclient.send_message(
+                SendMessageRequest(id=str(uuid4()),params=MessageSendParams(**send_payload))
+            )
+            return print_json_response(response)
     
     def invoke_remote_agent_streaming_sync(self, query: str, agent_name: str) -> str:
-        """A fully synchronous method to invoke remote agents."""
+        """A fully synchronous method to invoke remote agents in streaming mode."""
         nest_asyncio.apply()
         return asyncio.run(self.invoke_remote_agent_streaming(query, agent_name))
 
     async def invoke_remote_agent_streaming(self, query: str, agent_name: str) -> str:
-        """A single-turn streaming request to remote agent."""
+        """A single-turn streaming request to remote agent in streaming mode."""
         send_payload = create_send_message_payload(text=query)
         
         agent_url = self.a2aclient_pool.get(agent_name)
@@ -317,7 +351,7 @@ class A2AClientManager:
             )
             artifact = ""
             stream_response = a2aclient.send_message_streaming(
-                SendStreamingMessageRequest(params=MessageSendParams(**send_payload))
+                SendStreamingMessageRequest(id=str(uuid4()),params=MessageSendParams(**send_payload))
             )
             
             async for chunk in stream_response:

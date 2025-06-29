@@ -19,7 +19,7 @@ from agent_executor import StrandsAgentExecutor
 @click.option("--port", "port", default=10000)
 def main(host: str, port: int):
     request_handler = DefaultRequestHandler(
-        agent_executor=StrandsAgentExecutor(StrandAgent()),
+        agent_executor=StrandsAgentExecutor(DocAgent()),
         task_store=InMemoryTaskStore(),
     )
 
@@ -50,8 +50,8 @@ def get_agent_card(host: str, port: int):
         description="Helps with queries related to AWS services.",
         url=f"http://{host}:{port}/",
         version="1.0.0",
-        defaultInputModes=StrandAgent.SUPPORTED_CONTENT_TYPES,
-        defaultOutputModes=StrandAgent.SUPPORTED_CONTENT_TYPES,
+        defaultInputModes=DocAgent.SUPPORTED_CONTENT_TYPES,
+        defaultOutputModes=DocAgent.SUPPORTED_CONTENT_TYPES,
         capabilities=capabilities,
         skills=[skill],
         authentication=AgentAuthentication(schemes=["public"]),

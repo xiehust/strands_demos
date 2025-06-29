@@ -16,9 +16,10 @@ from a2a.types import (
 import httpx
 import traceback
 
-AGENT_URL = "http://localhost:10000"
+AGENT_URL = "http://localhost:9000"
 
 user_queries = [
+    "what time is it now in Beijing",
     "What pricing model does Amazon Bedrock Support?",
     "How to integrate AWS Lambda with SNS?",
     "What are the IAM policies that AWS lambda should have?"
@@ -57,8 +58,8 @@ def print_json_response(response: Any, description: str) -> None:
 async def run_single_turn_test(client: A2AClient) -> None:
     """Runs a single-turn non-streaming test."""
 
-    send_payload = create_send_message_payload(text="Hello, how can you help?")
-    request = SendMessageRequest(params=MessageSendParams(**send_payload))
+    send_payload = create_send_message_payload(text="hello, what time is it now in beijing")
+    request = SendMessageRequest(id=str(uuid4()),params=MessageSendParams(**send_payload))
 
     print("--- Single Turn Request ---")
     # Send Message
@@ -146,7 +147,7 @@ async def main() -> None:
 
 
             
-            # await run_single_turn_test(client)
+            await run_single_turn_test(client)
             # await run_streaming_test(client)
             # await run_multi_turn_test(client)
 
