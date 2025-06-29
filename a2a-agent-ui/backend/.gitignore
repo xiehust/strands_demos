@@ -1,0 +1,14 @@
+# Python-generated files
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+node_modules/
+cdk.out/
+# Virtual environments
+.venv
+.env
+.DS_Store
+__pycache__

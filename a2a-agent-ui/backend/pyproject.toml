@@ -1,0 +1,17 @@
+[project]
+name = "a2a-demo-backend"
+version = "0.1.0"
+description = "FastAPI backend for A2A Demo UI"
+requires-python = ">=3.13"
+dependencies = [
+    "fastapi>=0.104.1",
+    "uvicorn[standard]>=0.24.0",
+    "pydantic>=2.5.0",
+    "python-multipart>=0.0.6",
+    "strands-agents>=0.1.6",
+    "strands-agents[openai]",
+    "strands-agents-tools>=0.1.4",
+    "nest-asyncio",
+    "termcolor",
+    "a2a-sdk"
+]
