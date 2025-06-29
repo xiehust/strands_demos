@@ -9,4 +9,6 @@ repl_state
 
 # Virtual environments
 .venv
+.env
 sessions/
+.DS_Store
