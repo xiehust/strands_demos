@@ -12,20 +12,20 @@ os.environ["BYPASS_TOOL_CONSENT"] = "true"
 from strands.models.openai import OpenAIModel
 
 
-# MODEL = "us.amazon.nova-pro-v1:0"
-MODEL = OpenAIModel(
-    client_args={
-        "api_key": os.environ.get("API_KEY"),
-        "base_url": "https://api.siliconflow.cn/v1",
-    },
-    model_id="Pro/deepseek-ai/DeepSeek-R1",
-    params={
-        "max_tokens": 1000,
-        "temperature": 0.7,
-    }
-)
+MODEL = "us.amazon.nova-pro-v1:0"
+# MODEL = OpenAIModel(
+#     client_args={
+#         "api_key": os.environ.get("API_KEY"),
+#         "base_url": "https://api.siliconflow.cn/v1",
+#     },
+#     model_id="Pro/deepseek-ai/DeepSeek-R1",
+#     params={
+#         "max_tokens": 1000,
+#         "temperature": 0.7,
+#     }
+# )
 
-class StrandAgent:
+class DocAgent:
     SUPPORTED_CONTENT_TYPES = ["text", "text/plain"]
 
     def __init__(self):

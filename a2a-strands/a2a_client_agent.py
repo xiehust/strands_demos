@@ -21,19 +21,20 @@ load_dotenv()
 from strands.models.openai import OpenAIModel
 
 
-MODEL = OpenAIModel(
-    client_args={
-        "api_key": os.environ.get("API_KEY"),
-        "base_url": "https://api.siliconflow.cn/v1",
-    },
-    model_id="Pro/deepseek-ai/DeepSeek-R1",
-    params={
-        "max_tokens": 1000,
-        "temperature": 0.7,
-    }
-)
+# MODEL = OpenAIModel(
+#     client_args={
+#         "api_key": os.environ.get("API_KEY"),
+#         "base_url": "https://api.siliconflow.cn/v1",
+#     },
+#     model_id="Pro/deepseek-ai/DeepSeek-R1",
+#     params={
+#         "max_tokens": 1000,
+#         "temperature": 0.7,
+#     }
+# )
 
 # MODEL = "us.anthropic.claude-3-5-sonnet-20241022-v2:0"
+MODEL = "us.anthropic.claude-3-7-sonnet-20250219-v1:0"
 
 httpx_client = None
 a2a_manager = None

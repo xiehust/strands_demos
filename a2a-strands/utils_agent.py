@@ -12,21 +12,22 @@ import base64
 load_dotenv()
 from strands.models.openai import OpenAIModel
 
-# MODEL = "us.amazon.nova-pro-v1:0"
-MODEL = OpenAIModel(
-    client_args={
-        "api_key": os.environ.get("API_KEY"),
-        "base_url": "https://api.siliconflow.cn/v1",
-    },
-    # model_id="Pro/deepseek-ai/DeepSeek-R1",
-    # model_id = "Pro/deepseek-ai/DeepSeek-V3",
-    # model_id = "Qwen/Qwen3-235B-A22B",
-    model_id = "Qwen/Qwen3-30B-A3B",
-    params={
-        "max_tokens": 8100,
-        "temperature": 0.7,
-    }
-)
+MODEL = "us.anthropic.claude-3-7-sonnet-20250219-v1:0"
+
+# MODEL = OpenAIModel(
+#     client_args={
+#         "api_key": os.environ.get("API_KEY"),
+#         "base_url": "https://api.siliconflow.cn/v1",
+#     },
+#     # model_id="Pro/deepseek-ai/DeepSeek-R1",
+#     # model_id = "Pro/deepseek-ai/DeepSeek-V3",
+#     # model_id = "Qwen/Qwen3-235B-A22B",
+#     model_id = "Qwen/Qwen3-30B-A3B",
+#     params={
+#         "max_tokens": 8100,
+#         "temperature": 0.7,
+#     }
+# )
 
 
 class CalcAgent:

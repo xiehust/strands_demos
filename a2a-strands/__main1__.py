@@ -1,5 +1,5 @@
 import click
-from agent import StrandAgent
+from doc_agent import DocAgent
 
 from a2a.server.apps import A2AStarletteApplication
 from a2a.server.request_handlers import DefaultRequestHandler
