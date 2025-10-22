@@ -1,4 +1,0 @@
-[submodule "sample_agentic_ai_strands"]
-	path = sample_agentic_ai_strands
-	url = https://github.com/aws-samples/sample_agentic_ai_strands
-	branch = agentcore
