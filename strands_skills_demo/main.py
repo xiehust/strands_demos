@@ -15,6 +15,7 @@ load_dotenv()
 session = boto3.Session(region_name = os.environ.get('region_name','us-west-2'))
 os.environ['BYPASS_TOOL_CONSENT'] = "true"
 
+ROOT = Path(__file__).parent
 WORK_ROOT = Path(__file__).parent / "workdir"
 print(f"work dir: {WORK_ROOT}")
 try:
@@ -46,13 +47,13 @@ agent_model = BedrockModel(
 # Create a cheaper, faster model for summarization tasks
 summarization_model = BedrockModel(
     model_id="global.anthropic.claude-haiku-4-5-20251001-v1:0",  # More cost-effective for summarization
-    max_tokens=4000,
+    max_tokens=10000,
     boto_session=session,
     temperature=0.1,  # Low temperature for consistent summaries
 )
 
 conversation_manager = SummarizingConversationManager(
-    summary_ratio=0.3,
+    summary_ratio=0.4,
     preserve_recent_messages=20,
     summarization_agent=Agent(model=summarization_model)
 )
@@ -66,7 +67,7 @@ agent = Agent(
         model=agent_model,
         system_prompt=f"""You are a helpful AI assistant with access to various skills that enhance your capabilities.
 <IMPORTANT>
-- Your current working directory is {WORK_ROOT}, you are grant permissions with file system (read/write/create/edit etc) in the working directory {WORK_ROOT}.
+- Your current project root is {ROOT} and your working directory is {WORK_ROOT}, you are grant write permissions with file system (create/edit/delete etc) in the working directory {WORK_ROOT}.
 Don't create files outside the working directory.    
 - Use 'AskUserQuestion' tool when you need to ask the user questions during execution. 
 </IMPORTANT>
