@@ -178,19 +178,19 @@ class SkillToolInterceptor(HookProvider):
     # load skill content
     def add_skill_content(self, event: AfterToolCallEvent) -> None:
         logger.info(f"🔧 工具调用事件: {event.tool_use['name']}")
-        print(f"\n#Tool use:{event.tool_use['name']}\n")
+        # print(f"\n#Tool use:{event.tool_use['name']}\n")
         if event.tool_use['name'] == 'Skill':
             command = event.tool_use['input']['command']
             logger.info(f"🎯 处理技能命令: {command}")
             self.tooluse_ids[event.tool_use['toolUseId']] = load_skill(command)
-            logger.info(f"📝 技能内容已缓存，工具ID: {event.tool_use['toolUseId']}")
+            # logger.info(f"📝 技能内容已缓存，工具ID: {event.tool_use['toolUseId']}")
         # elif event.tool_use['name'] == 'AskUserQuestion':
         #     print(f"AskUserQuestion tool_use:{event.tool_use}")
             
      # add skill block in the followed content block of tool result
     def add_skill_message(self, event: MessageAddedEvent) -> None:
         if event.message['role'] == 'user':
-            logger.info("👤 处理用户消息事件...")
+            # logger.info("👤 处理用户消息事件...")
             for block in event.message['content']:
                 if 'toolResult' in block:
                     tooluse_id = block['toolResult']['toolUseId']
@@ -204,7 +204,7 @@ class SkillToolInterceptor(HookProvider):
 
             
     def add_message_cache(self, event:BeforeModelCallEvent) -> None:
-        logger.info("💾 处理模型调用前缓存事件...")
+        # logger.info("💾 处理模型调用前缓存事件...")
         # print("==========BeforeModelCallEvent=========\n")
         for message in event.agent.messages:
             content = message['content']
@@ -219,4 +219,4 @@ class SkillToolInterceptor(HookProvider):
                     "type": "default"
                 }
             }]
-            logger.info("✅ 缓存点已添加到最后一条消息")
+            # logger.info("✅ 缓存点已添加到最后一条消息")
