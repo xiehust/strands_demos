@@ -31,7 +31,7 @@ except Exception as e:
 agent_model = BedrockModel(
     model_id="global.anthropic.claude-sonnet-4-5-20250929-v1:0",
     temperature=1,
-    max_tokens=16000,
+    max_tokens=24000,
     cache_prompt="default",
     cache_tools="default",
     boto_session=session,
