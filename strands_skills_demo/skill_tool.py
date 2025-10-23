@@ -122,7 +122,7 @@ def load_skill(command:str) -> str:
         if not frontmatter_match:
             logger.error(f"❌ 技能 '{command}' 格式无效，缺少YAML前置内容")
             return [ {
-                "text": f"<command-message>The \"{command}\" skill launching faied</command-message>\n<command-name>{command}</command-name>"
+                "text": f"<command-message>The \"{command}\" skill launching failed</command-message>\n<command-name>{command}</command-name>"
             }]
         markdown_content = frontmatter_match.group(2)
         logger.info(f"✅ 技能 '{command}' 加载成功，内容长度: {len(markdown_content)} 字符")
@@ -135,7 +135,7 @@ def load_skill(command:str) -> str:
     except Exception as e:
         logger.error(f"💥 技能 '{command}' 加载失败: {str(e)}")
         return [ {
-            "text": f"<command-message>The \"{command}\" skill launching faied</command-message>\n<command-name>{command}</command-name>"
+            "text": f"<command-message>The \"{command}\" skill launching failed</command-message>\n<command-name>{command}</command-name>"
           }]
         
 def generate_skill_tool():
