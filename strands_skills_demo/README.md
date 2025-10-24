@@ -17,7 +17,7 @@ source .venv/bin/activate
 npm install
 ```
 
-### 添加Tavily API（可选）
+### 添加Tavily API（[点击免费注册](https://docs.tavily.com/documentation/mcp)）
 - 创建环境变量
 ```bash
 echo "TAVILY_API_KEY=<api-key>" >>.env
