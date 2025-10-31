@@ -1,0 +1,13 @@
+[project]
+name = "skills-mcp-server"
+version = "0.1.0"
+description = "MCP server providing access to Strands skills through tools and resources"
+readme = "README.md"
+requires-python = ">=3.12,<3.14"
+authors = [
+    {name = "Skills MCP Server", email = "info@example.com"}
+]
+keywords = ["mcp", "skills", "strands", "ai", "llm"]
+dependencies = [
+    "mcp>=1.1.2"
+]
