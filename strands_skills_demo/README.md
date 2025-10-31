@@ -17,7 +17,7 @@ uv pip install git+https://github.com/xiehust/sdk-python.git@c257c9238b1fa81b12b
 
 - 运行以下代码。
 ```bash
-python main.py --prompt "research about Claude Code Agent Skills (https://docs.claude.com/en/docs/claude-code/skills), and create a ppt in Chinese to introduce it, save it as pptx file in working directory."
+python agent_with_mcp.py --prompt "research about Claude Code Agent Skills (https://docs.claude.com/en/docs/claude-code/skills), and create a ppt in Chinese to introduce it, save it as pptx file in working directory."
 ```
 
 
