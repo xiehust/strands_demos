@@ -1,9 +1,14 @@
 # Strands Agents SDK 如何使用 [Claude SKILLs](https://github.com/anthropics/skills)
 
+## 技术文章链接
+
+https://mp.weixin.qq.com/s/oE2S0jMWyFjkYL4ZZvmamQ
+- ![alt text](assets/wx.png)
+
 ## 更新记录
 2025.10.31 增加[SKILL MCP Sever](../skills-mcp-server/README.md) 使用方式方式：
 
-先启动MCP Server，然后回到本目录下运行以下命令，在替换Strands Agents SDK (需要支持MCP Resource Operations)
+先启动MCP Server，然后回到本目录下运行以下命令，临时替换fork版 Strands Agents SDK (需要支持MCP Resource Operations)  
 ```bash
 deactivate
 uv sync
