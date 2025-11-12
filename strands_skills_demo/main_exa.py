@@ -10,6 +10,8 @@ import argparse
 from skill_tool import generate_skill_tool,SkillToolInterceptor 
 from ask_user_tool import ask_user
 from pathlib import Path
+from mcp.client.streamable_http import streamablehttp_client
+from strands.tools.mcp import MCPClient
 from dotenv import load_dotenv
 load_dotenv()
 session = boto3.Session(region_name = os.environ.get('region_name','us-west-2'))
@@ -44,6 +46,13 @@ agent_model = BedrockModel(
     }
 )
 
+# Create a cheaper, faster model for summarization tasks
+summarization_model = BedrockModel(
+    model_id="global.anthropic.claude-haiku-4-5-20251001-v1:0",  # More cost-effective for summarization
+    max_tokens=16000,
+    boto_session=session,
+    temperature=0.1,  # Low temperature for consistent summaries
+)
 
 DEFAULT_SUMMARIZATION_PROMPT = """You are a conversation summarizer. Provide a concise summary of the conversation \
 history.
@@ -74,56 +83,57 @@ Example format:
 ## Tools Executed
 * Tool X: Result Y"""
 
-# Create a cheaper, faster model for summarization tasks
-summarization_model = BedrockModel(
-    model_id="global.anthropic.claude-haiku-4-5-20251001-v1:0",  # More cost-effective for summarization
-    max_tokens=10000,
-    boto_session=session,
-    temperature=0.1,  # Low temperature for consistent summaries
-)
-
 conversation_manager = SummarizingConversationManager(
-    summary_ratio=0.4,
+    summary_ratio=0.3,
     preserve_recent_messages=20,
     summarization_agent=Agent(model=summarization_model,system_prompt=DEFAULT_SUMMARIZATION_PROMPT)
 )
 
-# Dynamically create skill tools, as it should read Skills folders when agent starts.
-skill_tool = generate_skill_tool()
-
-
-# Create agent with MCP tools
-agent = Agent(
-        model=agent_model,
-        system_prompt=f"""You are a helpful AI assistant with access to various skills that enhance your capabilities.
-<IMPORTANT>
-- Your current project root is {ROOT} and your working directory is {WORK_ROOT}, you are grant write permissions with file system (create/edit/delete etc) in the working directory {WORK_ROOT}.
-Don't create files outside the working directory.    
-- Use 'AskUserQuestion' tool when you need to ask the user questions during execution. 
-</IMPORTANT>
-""",
-        tools=[file_read, shell, editor,file_write, skill_tool,ask_user,tavily],
-        conversation_manager=conversation_manager,
-        hooks=[SkillToolInterceptor()]
-        )
 
 
 async def main(user_input_arg: str = None, messages_arg: str = None):
-    # User input from command-line arguments with priority: --messages > --user-input > default
-    if messages_arg is not None and messages_arg.strip():
-        # Parse messages JSON and pass full conversation history to agent
-        try:
-            messages_list = json.loads(messages_arg)
-            # Pass the full messages list to the agent
-            user_input = messages_list
-        except (json.JSONDecodeError, KeyError, TypeError):
-            user_input = "Hello, how can you help me?"
-    elif user_input_arg is not None and user_input_arg.strip():
-        user_input = user_input_arg.strip()
-    # Execute agent with streaming
-    async for event in agent.stream_async(user_input):
-        if "data" in event:
-            print(event['data'],end='',flush=True)
+    mcp_client = MCPClient(
+        lambda: streamablehttp_client(f"https://mcp.exa.ai/mcp?exaApiKey={os.environ.get('EXA_API_KEY')}")
+    )
+    with mcp_client:
+        mcp_tool = mcp_client.list_tools_sync()
+        print(f"✅ Connected! Loaded {len(mcp_tool)} tools:")
+        for tool in mcp_tool:
+            print(f"   - {tool.tool_name}")
+        
+        # Dynamically create skill tools, as it should read Skills folders when agent starts.
+        skill_tool = generate_skill_tool()
+
+        # Create agent with MCP tools
+        agent = Agent(
+                model=agent_model,
+                system_prompt=f"""You are a helpful AI assistant with access to various skills that enhance your capabilities.
+        <IMPORTANT>
+        - Your current project root is {ROOT} and your working directory is {WORK_ROOT}, you are grant write permissions with file system (create/edit/delete etc) in the working directory {WORK_ROOT}.
+        Don't create files outside the working directory.    
+        - Use 'AskUserQuestion' tool when you need to ask the user questions during execution. 
+        </IMPORTANT>
+        """,
+                tools=[file_read, shell, editor,file_write, skill_tool,ask_user,mcp_tool],
+                conversation_manager=conversation_manager,
+                hooks=[SkillToolInterceptor()],
+                callback_handler=None,
+                )
+        # User input from command-line arguments with priority: --messages > --user-input > default
+        if messages_arg is not None and messages_arg.strip():
+            # Parse messages JSON and pass full conversation history to agent
+            try:
+                messages_list = json.loads(messages_arg)
+                # Pass the full messages list to the agent
+                user_input = messages_list
+            except (json.JSONDecodeError, KeyError, TypeError):
+                user_input = "Hello, how can you help me?"
+        elif user_input_arg is not None and user_input_arg.strip():
+            user_input = user_input_arg.strip()
+        # Execute agent with streaming
+        async for event in agent.stream_async(user_input):
+            if "data" in event:
+                print(event['data'],end='',flush=True)
 
 
 if __name__ == "__main__":

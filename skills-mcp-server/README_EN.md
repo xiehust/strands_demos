@@ -22,7 +22,7 @@ uv run src/server.py
 go to folder of file [agent_with_mcp.py](../strands_skills_demo/agent_with_mcp.py)
 Run below code. 
 ```bash
-python main.py --prompt "research about Claude Code Agent Skills (https://docs.claude.com/en/docs/claude-code/skills), and create a ppt in Chinese to introduce it, save it as pptx file in working directory."
+python agent_with_mcp.py --prompt "research about Claude Code Agent Skills (https://docs.claude.com/en/docs/claude-code/skills), and create a ppt in Chinese to introduce it, save it as pptx file in working directory."
 ```
 
 
