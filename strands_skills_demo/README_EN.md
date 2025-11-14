@@ -1,64 +1,60 @@
-# Strands Agents SDK 如何使用Claude SKILLs
-# [English: How Strands Agents SDK Uses Claude SKILLs](./README_EN.md)
-## 技术文章链接
+# How Strands Agents SDK Uses [Claude SKILLs](https://github.com/anthropics/skills)
+
+## Technical Article Link
 
 https://mp.weixin.qq.com/s/oE2S0jMWyFjkYL4ZZvmamQ
 - ![alt text](assets/wx.png)
 
-## 更新记录
-2025.10.31 增加[SKILL MCP Sever](../skills-mcp-server/README.md) 使用方式方式：
+## Update Log
+2025.10.31 Added [SKILL MCP Server](../skills-mcp-server/README.md) usage instructions:
 
-先启动MCP Server，然后回到本目录下运行以下命令，临时替换fork版 Strands Agents SDK (需要支持MCP Resource Operations)  
+First start the MCP Server, then return to this directory and run the following commands to temporarily replace with the forked version of Strands Agents SDK (which needs to support MCP Resource Operations)
 ```bash
 deactivate
 uv sync
 uv pip install git+https://github.com/xiehust/sdk-python.git@c257c9238b1fa81b12b598855b0b1ae3e95a6e11
 ```
 
-- 运行以下代码。
+- Run the following code:
 ```bash
 python agent_with_mcp.py --prompt "research about Claude Code Agent Skills (https://docs.claude.com/en/docs/claude-code/skills), and create a ppt in Chinese to introduce it, save it as pptx file in working directory."
 ```
 
 
-## 环境要求
+## Environment Requirements
 1. Python >=3.12
 2. uv https://docs.astral.sh/uv/getting-started/installation/
 3. nodejs https://nodejs.org/en/download
 
-## 环境安装
-- python运行环境
+## Environment Installation
+- Python runtime environment
 ```bash
 uv sync
 source .venv/bin/activate
 ```
 
-- 可以预先安装一些nodejs依赖包提高效率 (如果不提前安装，Agent也会在执行过程中调用shell工具自行安装)
+- You can pre-install some Node.js dependencies to improve efficiency (if not installed in advance, the Agent will automatically install them by calling shell tools during execution)
 ```bash
 npm install
 ```
 
-### 添加Tavily API（[点击免费注册](https://docs.tavily.com/documentation/mcp)）
-- 创建环境变量
+### Add Tavily API ([Click to register for free](https://docs.tavily.com/documentation/mcp))
+- Create environment variable
 ```bash
 echo "TAVILY_API_KEY=<api-key>" >>.env
 ```
 
 
-## 效果测试 (1)
-1. 生成PPT
+## Effect Testing (1)
+1. Generate PPT
 ```bash
 python main.py --prompt "research about Claude Code Agent Skills (https://docs.claude.com/en/docs/claude-code/skills), and create a ppt in Chinese to introduce it, save it as pptx file in working directory."
 ```
 
-2. 效果预览
-**生成PPT文件下载**
+2. Effect Preview
+**Download Generated PPT Files**
 1. [Claude-Code-Agent-Skills-介绍.pptx](assets/Claude-Code-Agent-Skills-介绍.pptx)
 ![alt text](assets/image3.png)
 2. [Global_Consumer_Electronics_Market_2025_by_strands.pptx](assets/Global_Consumer_Electronics_Market_2025_by_strands.pptx)
 ![alt text](assets/image.png)
 ![alt text](assets/image2.png)
-
-
-
-
