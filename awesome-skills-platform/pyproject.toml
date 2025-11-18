@@ -1,0 +1,25 @@
+[project]
+name = "agent-platform"
+version = "0.1.0"
+description = "AI Agent Platform with Strands Agents and AWS Bedrock AgentCore"
+readme = "README.md"
+requires-python = ">=3.12, <3.14"
+dependencies = [
+    # FastAPI and server
+    "fastapi>=0.115.0",
+    "uvicorn[standard]>=0.34.0",
+    "python-multipart>=0.0.12",
+    # AWS SDK
+    "boto3>=1.35.0",
+    # Strands Agents and AgentCore
+    "strands-agents[anthropic]>=1.13.0",
+    "strands-agents-tools>=0.2.12",
+    "bedrock-agentcore>=1.0.0",
+    "bedrock-agentcore-starter-toolkit",
+    # Data validation
+    "pydantic>=2.10.0",
+    "pydantic-settings>=2.6.0",
+    # Other tools
+    "python-pptx>=1.0.2",
+    "psutil>=7.1.3",
+]

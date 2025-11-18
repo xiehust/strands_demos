@@ -9,5 +9,9 @@ authors = [
 ]
 keywords = ["mcp", "skills", "strands", "ai", "llm"]
 dependencies = [
-    "mcp>=1.1.2"
+    "mcp>=1.1.2,<1.21.1",
+    "bedrock-agentcore-starter-toolkit",
+    "bedrock-agentcore",
+    "strands-agents",
+    "boto3>=1.26.0"
 ]

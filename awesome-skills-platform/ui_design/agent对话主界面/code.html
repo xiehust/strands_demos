@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>AI Agent Platform</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet"/>
+<script>
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            "primary": "#2b6cee",
+            "background-light": "#f6f6f8",
+            "background-dark": "#101622",
+          },
+          fontFamily: {
+            "display": ["Space Grotesk", "sans-serif"]
+          },
+          borderRadius: {
+            "DEFAULT": "0.25rem",
+            "lg": "0.5rem",
+            "xl": "0.75rem",
+            "full": "9999px"
+          },
+        },
+      },
+    }
+  </script>
+<style>
+    .material-symbols-outlined {
+      font-variation-settings:
+        'FILL' 0,
+        'wght' 400,
+        'GRAD' 0,
+        'opsz' 24
+    }
+  </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark font-display">
+<div class="relative flex h-screen w-full flex-row overflow-hidden">
+<aside class="flex h-full w-full max-w-[280px] flex-col justify-between border-r border-slate-200/10 bg-white/5 p-4 dark:bg-black/20">
+<div class="flex flex-col gap-4">
+<div class="flex items-center gap-3">
+<div class="bg-center bg-no-repeat aspect-square bg-cover rounded-full size-10" data-alt="Abstract blue and purple gradient logo" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuBe2VgFd0-DNdFxgSwH3p8r7JigNMs_liXMZGJu8tUfhYqaPxLIi7B8x832tEzAgCzLtgQfrWGTuLGMmIc8x9iwIT1CfTRFTJ-DLK1AKlKJ8yJLUbGsXTQeSsQ8THiRhwNoUFf68L8X1Lk65oKB78vkRevkAxfSRruduxI7bh9lQNCoU_qvD6cLhr50iKn8IvRuZiegTseVmhine7BkB03nT0bVzyLzqbzXBoWrVtg2AFNC_OvEzg5u0oRc6qBLJeFydFJOP4uIDHFC");'></div>
+<div class="flex flex-col">
+<h1 class="text-slate-900 dark:text-white text-base font-medium leading-normal">AI Agent Platform</h1>
+<p class="text-slate-500 dark:text-[#9da6b9] text-sm font-normal leading-normal">Workspace</p>
+</div>
+</div>
+<div class="flex flex-col gap-1">
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg bg-primary/10 dark:bg-primary/20" href="#">
+<span class="material-symbols-outlined text-primary text-xl">chat_bubble</span>
+<p class="text-primary text-sm font-medium leading-normal">Python script for data analysis</p>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-slate-100 dark:hover:bg-white/5" href="#">
+<span class="material-symbols-outlined text-slate-500 dark:text-slate-400 text-xl">chat_bubble</span>
+<p class="text-slate-700 dark:text-white text-sm font-normal leading-normal">Image generation prompt</p>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-slate-100 dark:hover:bg-white/5" href="#">
+<span class="material-symbols-outlined text-slate-500 dark:text-slate-400 text-xl">chat_bubble</span>
+<p class="text-slate-700 dark:text-white text-sm font-normal leading-normal">Summarize Q3 report</p>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-slate-100 dark:hover:bg-white/5" href="#">
+<span class="material-symbols-outlined text-slate-500 dark:text-slate-400 text-xl">chat_bubble</span>
+<p class="text-slate-700 dark:text-white text-sm font-normal leading-normal">Translate this email</p>
+</a>
+</div>
+</div>
+<div class="flex flex-col gap-2">
+<button class="flex w-full cursor-pointer items-center justify-center overflow-hidden rounded-lg h-10 px-4 bg-primary text-white text-sm font-bold leading-normal tracking-wide hover:bg-primary/90">
+<span class="truncate">New Chat</span>
+</button>
+<div class="flex flex-col gap-1">
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-slate-100 dark:hover:bg-white/5" href="#">
+<span class="material-symbols-outlined text-slate-500 dark:text-slate-400 text-xl">settings</span>
+<p class="text-slate-700 dark:text-white text-sm font-medium leading-normal">Settings</p>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-slate-100 dark:hover:bg-white/5" href="#">
+<span class="material-symbols-outlined text-slate-500 dark:text-slate-400 text-xl">help</span>
+<p class="text-slate-700 dark:text-white text-sm font-medium leading-normal">Help</p>
+</a>
+</div>
+</div>
+</aside>
+<main class="flex h-full flex-1 flex-col">
+<header class="flex shrink-0 items-center justify-between whitespace-nowrap border-b border-solid border-slate-200/10 px-6 py-3">
+<div class="flex items-center gap-4 text-slate-900 dark:text-white">
+<div class="size-4 text-primary">
+<svg fill="none" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+<path d="M6 6H42L36 24L42 42H6L12 24L6 6Z" fill="currentColor"></path>
+</svg>
+</div>
+<h2 class="text-slate-900 dark:text-white text-lg font-bold leading-tight tracking-[-0.015em]">Agent Chat: Python script for data analysis</h2>
+</div>
+<div class="flex flex-1 items-center justify-end gap-4">
+<a class="flex cursor-pointer items-center justify-center overflow-hidden rounded-lg h-9 bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-white gap-2 text-sm font-bold leading-normal min-w-0 px-2.5 hover:bg-slate-200 dark:hover:bg-slate-700" href="https://github.com" target="_blank">
+<svg class="h-5 w-5" fill="currentColor" role="img" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><title>GitHub</title><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"></path></svg>
+</a>
+<div class="bg-center bg-no-repeat aspect-square bg-cover rounded-full size-10" data-alt="User avatar with a gradient background" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuBYUs5PzJqPdpAuMQx8yq4N_xnYWVdpnR6mIVOSzfbcdiWi7MM_Fj7QurDRfBLYPc3_LLSIXbP1ciQEG6cNMURRLE7iLmlBtG1NgbEuU-Jl16JXYeR--FIHe8muA3DAGPpzZx46QxUnRllUjpiXwjKd1aq3Cna95437LXfYMZSrTPObx-NBVP7gQaYr5Jvj3j7pDxaSduST-1U49qFTIx0ErCVH-VzfIc1ge4w42ZGgyBzumXd4NlFj_d8oCCAI1Z0GSPCV-6C5f1EX");'></div>
+</div>
+</header>
+<div class="flex flex-1 flex-col overflow-y-auto px-4 sm:px-6 lg:px-8">
+<div class="flex-1 space-y-8 py-8">
+<div class="flex gap-4">
+<div class="bg-center bg-no-repeat aspect-square bg-cover rounded-full size-10 shrink-0" data-alt="AI Agent avatar with a blue and purple gradient" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuBNp1b6RQ_QQGrOG_vde91mhcQMFu2V3GkOVCWjRhdo_Jkbc5yZ7kFBABV1hdwbf6TM8Cuj1KVUAxjicFO0Yx_UFdycav1g-mIx_OadtJuVh29Kz5KUYH0zZr9uA-jvhTKW6KIPyO9pDxCv26KHrlmUda0Y9Ae3jZHKGRr4luhb2R4xa7LabUcFwlovkU2C-PO4WViwO7R1qMLBsxXkEOjSaAam1uqlh5UO7BSOEND0v0wIiVvi1HeSxgKnzYdH89uG1BTD-H1uEmUP");'></div>
+<div class="flex flex-1 flex-col items-start gap-2">
+<div class="flex flex-wrap items-center gap-x-3 gap-y-1">
+<p class="text-slate-900 dark:text-white text-base font-bold leading-tight">AI Agent</p>
+<p class="text-slate-500 dark:text-[#9da6b9] text-sm font-normal leading-normal">10:30 AM</p>
+</div>
+<p class="text-slate-800 dark:text-slate-200 text-base font-normal leading-relaxed">
+                Hello, I'm your AI Agent. How can I assist you today? You can ask me questions, upload images, or enable Skills for advanced tasks.
+              </p>
+</div>
+</div>
+<div class="flex gap-4">
+<div class="bg-center bg-no-repeat aspect-square bg-cover rounded-full size-10 shrink-0" data-alt="User avatar with a gradient background" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuBhIVk-p52usu490EiNFoCaTxeUk9A3EksurkDUL9RIXLJDRtLZSf3AZQ3_jOS1r-FK-WcHvUcaITO0430-ilqr4xY8b92y_5ytqKngrzb6ivpMi5kbtinDJit99bcRT8cUHZxrKPC_nbBtd14WsP-0fnHNBoMBQV-bVT8IQt0cwpn24oFYM70mFsQJfKGdYm0xTXgn9ozpGzn37vtOtL39q76YJtcdJ2mJsJMEMujWAQ0zFB_sqlGpy8pTJVEqBkLIv0980CtKAYFz");'></div>
+<div class="flex flex-1 flex-col items-start gap-2">
+<div class="flex flex-wrap items-center gap-x-3 gap-y-1">
+<p class="text-slate-900 dark:text-white text-base font-bold leading-tight">User</p>
+<p class="text-slate-500 dark:text-[#9da6b9] text-sm font-normal leading-normal">10:31 AM</p>
+</div>
+<p class="text-slate-800 dark:text-slate-200 text-base font-normal leading-relaxed">Please write a python script to parse a CSV and output the average of the 'revenue' column.</p>
+</div>
+</div>
+<div class="flex gap-4">
+<div class="bg-center bg-no-repeat aspect-square bg-cover rounded-full size-10 shrink-0" data-alt="AI Agent avatar with a blue and purple gradient" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuBFMe6rFMJSRgPQ8T_YtNnMT9aURgB6R4qbhnT_K_alBFqmZsKlll0WsxyoOMlhu0FrkPx2wP18XEzPP3mvJEJ0RiLZgQIAV2BNHFl05oR0DNs2MOoXjAEbnyHgqa-hYH8N8KhyesnB-mKqOY995Nr6WHaKqjeirOsriHY6I2VPiflNp0iAlB4els6-hlYUM9MRd_ex5wqf9qZbpyv1WSkQGUl1C_dSSLv8JDdf7Dg5ctiinmt3cDe0clbDLYXQGABl8joNv0F7u5SY");'></div>
+<div class="flex w-full flex-1 flex-col items-start gap-2">
+<div class="flex flex-wrap items-center gap-x-3 gap-y-1">
+<p class="text-slate-900 dark:text-white text-base font-bold leading-tight">AI Agent</p>
+<p class="text-slate-500 dark:text-[#9da6b9] text-sm font-normal leading-normal">10:32 AM</p>
+</div>
+<p class="text-slate-800 dark:text-slate-200 text-base font-normal leading-relaxed">
+                Certainly. First, I need to use the `CodeInterpreter` tool to execute the script.
+              </p>
+<div class="mt-2 w-full max-w-2xl overflow-hidden rounded-lg border border-slate-200/10">
+<div class="flex items-center gap-2 bg-slate-100 dark:bg-slate-800/50 px-4 py-2">
+<span class="material-symbols-outlined text-green-500 text-xl">terminal</span>
+<p class="text-sm font-medium text-slate-700 dark:text-slate-300">Tool Call: CodeInterpreter</p>
+<span class="ml-auto text-xs text-slate-500 dark:text-slate-400">Success</span>
+</div>
+<div class="bg-background-light dark:bg-[#151c2c] p-4 text-sm">
+<div class="relative rounded-md bg-slate-200/50 dark:bg-black/50">
+<button class="absolute top-2 right-2 flex items-center gap-1 rounded-md bg-slate-300/50 px-2 py-1 text-xs text-slate-700 hover:bg-slate-300 dark:bg-slate-700 dark:text-slate-200 dark:hover:bg-slate-600">
+<span class="material-symbols-outlined text-sm">content_copy</span>
+                      Copy
+                    </button>
+<pre><code class="language-python block overflow-x-auto p-4 font-mono text-sm text-slate-800 dark:text-slate-200">
+import pandas as pd
+import io
+# Sample CSV data
+csv_data = """id,product,revenue,date
+1,A,100,2023-01-15
+2,B,150,2023-01-16
+3,A,200,2023-01-17
+4,C,50,2023-01-18
+5,B,120,2023-01-19
+"""
+df = pd.read_csv(io.StringIO(csv_data))
+average_revenue = df['revenue'].mean()
+print(f"The average revenue is: {average_revenue}")
+                    </code></pre>
+</div>
+<div class="mt-4 rounded-md border border-slate-200/10 bg-slate-200/20 dark:bg-black/20 p-3">
+<p class="font-mono text-sm text-slate-700 dark:text-slate-300"><span class="font-semibold text-slate-500 dark:text-slate-400">Result: </span>The average revenue is: 124.0</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="shrink-0 border-t border-solid border-slate-200/10 bg-background-light dark:bg-background-dark px-4 sm:px-6 lg:px-8 py-4">
+<div class="mx-auto w-full max-w-4xl">
+<div class="relative">
+<textarea class="w-full resize-none rounded-xl border border-slate-300 bg-slate-100 p-4 pr-12 text-base text-slate-900 placeholder:text-slate-500 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 dark:border-slate-700 dark:bg-slate-800/50 dark:text-white dark:placeholder:text-slate-400" placeholder="Type your message, or upload an image..." rows="1"></textarea>
+<button class="absolute bottom-3 right-3 flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-white transition-colors hover:bg-primary/90 disabled:bg-slate-300 disabled:dark:bg-slate-700">
+<span class="material-symbols-outlined text-xl">arrow_upward</span>
+</button>
+</div>
+<div class="mt-3 flex items-center gap-6">
+<button class="flex items-center gap-2 text-slate-500 hover:text-primary dark:text-slate-400 dark:hover:text-primary">
+<span class="material-symbols-outlined">attachment</span>
+</button>
+<label class="flex cursor-pointer items-center gap-2 text-sm text-slate-600 dark:text-slate-300">
+<input class="h-4 w-4 rounded border-slate-300 bg-slate-100 text-primary focus:ring-primary/50 dark:border-slate-600 dark:bg-slate-700 dark:ring-offset-background-dark" type="checkbox"/>
+              Enable Skills
+            </label>
+<label class="flex cursor-pointer items-center gap-2 text-sm text-slate-600 dark:text-slate-300">
+<input class="h-4 w-4 rounded border-slate-300 bg-slate-100 text-primary focus:ring-primary/50 dark:border-slate-600 dark:bg-slate-700 dark:ring-offset-background-dark" type="checkbox"/>
+              Enable MCP
+            </label>
+</div>
+</div>
+</div>
+</main>
+</div>
+
+</body></html>

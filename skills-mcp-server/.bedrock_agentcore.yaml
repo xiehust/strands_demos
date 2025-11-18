@@ -1,0 +1,102 @@
+default_agent: skills_mcp
+agents:
+  skills_mcp:
+    name: skills_mcp
+    entrypoint: /home/ubuntu/workspace/strands_demos/skills-mcp-server/src/server_agentcore.py
+    deployment_type: container
+    runtime_type: null
+    platform: linux/arm64
+    container_runtime: docker
+    source_path: /home/ubuntu/workspace/strands_demos/skills-mcp-server/src
+    aws:
+      execution_role: arn:aws:iam::434444145045:role/AmazonBedrockAgentCoreSDKRuntime-us-east-1-72106ea7e5
+      execution_role_auto_create: false
+      account: '434444145045'
+      region: us-east-1
+      ecr_repository: 434444145045.dkr.ecr.us-east-1.amazonaws.com/bedrock-agentcore-skills_mcp
+      ecr_auto_create: false
+      s3_path: null
+      s3_auto_create: false
+      network_configuration:
+        network_mode: PUBLIC
+        network_mode_config: null
+      protocol_configuration:
+        server_protocol: MCP
+      observability:
+        enabled: true
+      lifecycle_configuration:
+        idle_runtime_session_timeout: null
+        max_lifetime: null
+    bedrock_agentcore:
+      agent_id: skills_mcp-ECXa5Z6q1x
+      agent_arn: arn:aws:bedrock-agentcore:us-east-1:434444145045:runtime/skills_mcp-ECXa5Z6q1x
+      agent_session_id: null
+    codebuild:
+      project_name: null
+      execution_role: null
+      source_bucket: null
+    memory:
+      mode: NO_MEMORY
+      memory_id: null
+      memory_arn: null
+      memory_name: null
+      event_expiry_days: 30
+      first_invoke_memory_check_done: false
+      was_created_by_toolkit: false
+    authorizer_configuration:
+      customJWTAuthorizer:
+        discoveryUrl: https://cognito-idp.us-east-1.amazonaws.com/us-east-1_MTVrzbBMX/.well-known/openid-configuration
+        allowedClients:
+        - 2ndciufo32t07p9a4507l3lken
+    request_header_configuration: null
+    oauth_configuration: null
+  skills_mcp3:
+    name: skills_mcp3
+    entrypoint: /home/ubuntu/workspace/strands_demos/skills-mcp-server/src/server_agentcore.py
+    deployment_type: container
+    runtime_type: null
+    platform: linux/arm64
+    container_runtime: docker
+    source_path: /home/ubuntu/workspace/strands_demos/skills-mcp-server/src
+    aws:
+      execution_role: arn:aws:iam::434444145045:role/AmazonBedrockAgentCoreSDKRuntime-us-east-1-72106ea7e5
+      execution_role_auto_create: false
+      account: '434444145045'
+      region: us-east-1
+      ecr_repository: 434444145045.dkr.ecr.us-east-1.amazonaws.com/bedrock-agentcore-skills_mcp
+      ecr_auto_create: false
+      s3_path: null
+      s3_auto_create: false
+      network_configuration:
+        network_mode: PUBLIC
+        network_mode_config: null
+      protocol_configuration:
+        server_protocol: MCP
+      observability:
+        enabled: true
+      lifecycle_configuration:
+        idle_runtime_session_timeout: null
+        max_lifetime: null
+    bedrock_agentcore:
+      agent_id: skills_mcp3-hfrnA469mY
+      agent_arn: arn:aws:bedrock-agentcore:us-east-1:434444145045:runtime/skills_mcp3-hfrnA469mY
+      agent_session_id: null
+    codebuild:
+      project_name: null
+      execution_role: null
+      source_bucket: null
+    memory:
+      mode: NO_MEMORY
+      memory_id: null
+      memory_arn: null
+      memory_name: null
+      event_expiry_days: 30
+      first_invoke_memory_check_done: false
+      was_created_by_toolkit: false
+    authorizer_configuration:
+      customJWTAuthorizer:
+        discoveryUrl: https://cognito-idp.us-east-1.amazonaws.com/us-east-1_MTVrzbBMX/.well-known/openid-configuration
+        allowedClients:
+        - 2ndciufo32t07p9a4507l3lken
+    request_header_configuration: null
+    oauth_configuration: null

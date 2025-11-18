@@ -1,0 +1,10 @@
+# Code Execution MCP Server Dependencies
+
+# Core MCP framework
+mcp>=1.0.0
+
+# FastMCP for easier MCP server development
+# (should be included with mcp package)
+
+# Optional: For enhanced features
+# boto3>=1.28.0  # If you want S3 integration from existing server
