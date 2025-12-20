@@ -1,13 +1,17 @@
 """
 Agent manager for creating and managing Strands Agents with Bedrock models.
+
+Simplified version - runs agents directly in the FastAPI backend without AgentCore Runtime.
 """
 from strands import Agent
 from strands.models import BedrockModel
-from typing import Optional, List
+from typing import Optional
 import logging
 
 from src.database.dynamodb import db_client
 from src.skill_tool import generate_skill_tool, SkillToolInterceptor
+from src.core.mcp_manager import mcp_manager
+from src.core.memory_manager import get_memory_manager
 
 logger = logging.getLogger(__name__)
 
@@ -17,17 +21,24 @@ class AgentManager:
 
     def __init__(self):
         """Initialize agent manager."""
-        self._agents: dict[str, Agent] = {}
-        self._models: dict[str, BedrockModel] = {}
-        self._skill_tool = None  # Lazy load skill tool
-        self._skill_interceptor = None  # Lazy load skill interceptor
+        self._agents: dict[str, dict] = {}
+        self._models: dict[str, dict] = {}
+        self._skill_tool = None
+        self._skill_interceptor = None
 
-    def get_or_create_agent(self, agent_id: str) -> Agent:
+    def get_or_create_agent(
+        self,
+        agent_id: str,
+        session_id: Optional[str] = None,
+        actor_id: str = "default-user",
+    ) -> Agent:
         """
         Get an existing agent from cache or create a new one from database config.
 
         Args:
             agent_id: The agent ID to retrieve
+            session_id: Optional session ID for conversation tracking
+            actor_id: User/actor identifier
 
         Returns:
             Agent: The configured Strands Agent
@@ -35,9 +46,12 @@ class AgentManager:
         Raises:
             ValueError: If agent not found in database
         """
+        # Build cache key that includes session_id
+        cache_key = f"{agent_id}:{session_id}" if session_id else agent_id
+
         # Return cached agent if exists
-        if agent_id in self._agents:
-            return self._agents[agent_id]["agent"]
+        if cache_key in self._agents:
+            return self._agents[cache_key]["agent"]
 
         # Load agent config from database
         agent_config = db_client.get_agent(agent_id)
@@ -49,7 +63,7 @@ class AgentManager:
 
         # Cache agent with model_id
         model_id = agent_config.get("modelId", agent_config.get("model_id"))
-        self._agents[agent_id] = {"agent": agent, "model_id": model_id}
+        self._agents[cache_key] = {"agent": agent, "model_id": model_id}
 
         return agent
 
@@ -71,8 +85,8 @@ class AgentManager:
 
         # Extract configuration
         system_prompt = config.get("systemPrompt", config.get("system_prompt"))
-        thinking_enabled = config.get("thinkingEnabled", config.get("thinking_enabled", False))
         skill_ids = config.get("skillIds", config.get("skill_ids", []))
+        mcp_ids = config.get("mcpIds", config.get("mcp_ids", []))
 
         # Prepare tools and hooks
         tools = []
@@ -84,16 +98,30 @@ class AgentManager:
             skill_tool = self._get_or_create_skill_tool()
             if skill_tool:
                 tools.append(skill_tool)
-                logger.info(f"✅ Skill tool added to agent {agent_id}")
+                logger.info(f"Skill tool added to agent {agent_id}")
 
                 # Add skill interceptor to hooks
                 if self._skill_interceptor:
                     hooks.append(self._skill_interceptor)
-                    logger.info(f"✅ Skill interceptor added to agent {agent_id} hooks")
+                    logger.info(f"Skill interceptor added to agent {agent_id} hooks")
             else:
-                logger.warning(f"⚠️ Skill tool not available for agent {agent_id}")
+                logger.warning(f"Skill tool not available for agent {agent_id}")
 
-        # Create agent with configuration
+        # Load MCP clients if enabled
+        if mcp_ids:
+            logger.info(f"Agent {agent_id} has {len(mcp_ids)} MCP servers enabled: {mcp_ids}")
+            for mcp_id in mcp_ids:
+                try:
+                    mcp_client = mcp_manager.get_mcp_client(mcp_id)
+                    if mcp_client:
+                        tools.append(mcp_client)
+                        logger.info(f"Added MCP client for server {mcp_id}")
+                    else:
+                        logger.warning(f"Could not create MCP client for {mcp_id}")
+                except Exception as e:
+                    logger.error(f"Failed to load MCP client {mcp_id}: {e}")
+
+        # Create agent (no session_manager - we handle memory manually)
         agent = Agent(
             model=model,
             system_prompt=system_prompt or "You are a helpful AI assistant.",
@@ -102,7 +130,7 @@ class AgentManager:
             hooks=hooks if hooks else None,
         )
 
-        logger.info(f"Created agent {agent_id} with model {model_id}, {len(tools)} tools, and {len(hooks)} hooks")
+        logger.info(f"Created agent {agent_id} with model {model_id}, {len(tools)} tools")
 
         return agent
 
@@ -122,14 +150,11 @@ class AgentManager:
             cached = self._models[model_id]
             return cached["model"], cached["model_id"]
 
-        # Extract model configuration (convert Decimal to proper types)
+        # Extract model configuration
         temperature = float(config.get("temperature", 0.7))
         max_tokens = int(config.get("maxTokens", config.get("max_tokens", 4096)))
-        thinking_enabled = bool(config.get("thinkingEnabled", config.get("thinking_enabled", False)))
-        thinking_budget = int(config.get("thinkingBudget", config.get("thinking_budget", 1024)))
 
         # Create BedrockModel
-        # Note: Thinking mode configuration is handled through additional_args
         model_kwargs = {
             "model_id": model_id,
             "temperature": temperature,
@@ -137,22 +162,12 @@ class AgentManager:
             "cache_prompt": "default",  # Enable prompt caching
         }
 
-        # Add thinking configuration if enabled
-        # TODO: Add thinking support when available in Strands SDK
-        # if thinking_enabled:
-        #     model_kwargs["additional_args"] = {
-        #         "thinking": {
-        #             "type": "enabled",
-        #             "budget_tokens": thinking_budget
-        #         }
-        #     }
-
         model = BedrockModel(**model_kwargs)
 
-        # Cache model along with model_id for later reference
+        # Cache model
         self._models[model_id] = {"model": model, "model_id": model_id}
 
-        logger.info(f"Created model {model_id} (temp={temperature}, max_tokens={max_tokens}, thinking={thinking_enabled})")
+        logger.info(f"Created model {model_id} (temp={temperature}, max_tokens={max_tokens})")
 
         return model, model_id
 
@@ -164,17 +179,16 @@ class AgentManager:
             The skill tool function, or None if skills are not available
         """
         if self._skill_tool is None:
-            logger.info("🔧 Initializing skill system...")
+            logger.info("Initializing skill system...")
             try:
                 self._skill_tool = generate_skill_tool()
                 if self._skill_tool:
-                    # Also create the skill interceptor
                     self._skill_interceptor = SkillToolInterceptor()
-                    logger.info("✅ Skill system initialized successfully")
+                    logger.info("Skill system initialized successfully")
                 else:
-                    logger.warning("⚠️ No skills found, skill system not available")
+                    logger.warning("No skills found, skill system not available")
             except Exception as e:
-                logger.error(f"❌ Failed to initialize skill system: {e}")
+                logger.error(f"Failed to initialize skill system: {e}")
                 self._skill_tool = None
                 self._skill_interceptor = None
 
@@ -188,61 +202,99 @@ class AgentManager:
             agent_id: If provided, clear only this agent. Otherwise clear all.
         """
         if agent_id:
-            self._agents.pop(agent_id, None)
+            # Clear all cache keys that start with this agent_id
+            keys_to_remove = [k for k in self._agents if k.startswith(f"{agent_id}:") or k == agent_id]
+            for key in keys_to_remove:
+                del self._agents[key]
             logger.info(f"Cleared cache for agent {agent_id}")
         else:
             self._agents.clear()
             self._models.clear()
             logger.info("Cleared all agent caches")
 
-    async def run_async(self, agent_id: str, user_message: str) -> dict:
+    async def run_async(
+        self,
+        agent_id: str,
+        user_message: str,
+        session_id: Optional[str] = None,
+        actor_id: str = "default-user",
+    ) -> dict:
         """
         Run an asynchronous conversation with an agent.
 
         Args:
             agent_id: The agent ID to use
             user_message: The user's message
+            session_id: Optional session ID for conversation tracking
+            actor_id: User/actor identifier
 
         Returns:
             dict: Response containing assistant message and metadata
         """
-        agent = self.get_or_create_agent(agent_id)
+        agent = self.get_or_create_agent(agent_id, session_id=session_id, actor_id=actor_id)
 
         # Get model_id from cache
-        model_id = self._agents[agent_id]["model_id"]
+        cache_key = f"{agent_id}:{session_id}" if session_id else agent_id
+        model_id = self._agents[cache_key]["model_id"]
+
+        # Get or create conversation session for history tracking
+        memory_manager = get_memory_manager()
+        session = None
+        if session_id:
+            session = memory_manager.get_or_create_session(
+                session_id=session_id,
+                agent_id=agent_id,
+                actor_id=actor_id,
+            )
+            # Add user message to history
+            session.add_message("user", user_message)
 
         # Run agent with user message
         result = await agent.invoke_async(user_message)
 
-        # Extract response
-        response_text = ""
-        thinking_content = []
+        # Extract response text
+        response_text = self._extract_response_text(result)
 
-        # Try different parsing strategies
-        # Strategy 1: Check for AgentResult.message attribute (Strands Agent standard)
+        # Save assistant response to history
+        if session:
+            session.add_message("assistant", response_text)
+
+        return {
+            "message": response_text,
+            "thinking": None,
+            "model_id": model_id,
+            "stop_reason": result.stop_reason if hasattr(result, "stop_reason") else None,
+        }
+
+    def _extract_response_text(self, result) -> str:
+        """
+        Extract text from agent result using multiple strategies.
+
+        Args:
+            result: The agent result object
+
+        Returns:
+            str: Extracted response text
+        """
+        response_text = ""
+
+        # Strategy 1: Check for AgentResult.message attribute
         if hasattr(result, 'message') and result.message:
-            # Check if message is a dict or string
             if isinstance(result.message, dict):
-                # Extract content from dict structure
                 content = result.message.get('content', [])
                 if isinstance(content, list) and len(content) > 0:
-                    # Extract text from content blocks
                     for block in content:
                         if isinstance(block, dict) and 'text' in block:
                             response_text += block['text']
                 else:
                     response_text = str(content)
-                logger.info(f"Parsed from result.message dict: {len(response_text)} chars")
             elif isinstance(result.message, str):
                 response_text = result.message
-                logger.info(f"Parsed from result.message string: {len(response_text)} chars")
             else:
                 response_text = str(result.message)
-                logger.info(f"Parsed from result.message (converted): {len(response_text)} chars")
-        # Strategy 2: Check if result is a string (simple text response)
+        # Strategy 2: Check if result is a string
         elif isinstance(result, str):
             response_text = result
-            logger.info("Parsed as string")
         # Strategy 3: Check for messages attribute
         elif hasattr(result, 'messages'):
             for message in result.messages:
@@ -250,32 +302,19 @@ class AgentManager:
                     for content in message.content:
                         if content.type == "text":
                             response_text += content.text
-                        elif content.type == "thinking":
-                            thinking_content.append(content.thinking)
-            logger.info(f"Parsed from messages: {len(response_text)} chars")
         # Strategy 4: Check for content attribute
         elif hasattr(result, 'content'):
             if isinstance(result.content, str):
                 response_text = result.content
             elif isinstance(result.content, list):
                 for content in result.content:
-                    if hasattr(content, 'type'):
-                        if content.type == "text":
-                            response_text += content.text
-                        elif content.type == "thinking":
-                            thinking_content.append(content.thinking)
-            logger.info(f"Parsed from content: {len(response_text)} chars")
-        # Strategy 5: Last resort - convert to string
+                    if hasattr(content, 'type') and content.type == "text":
+                        response_text += content.text
+        # Strategy 5: Last resort
         else:
             response_text = str(result)
-            logger.warning(f"Using str() conversion: {len(response_text)} chars")
 
-        return {
-            "message": response_text,
-            "thinking": thinking_content if thinking_content else None,
-            "model_id": model_id,
-            "stop_reason": result.stop_reason if hasattr(result, "stop_reason") else None,
-        }
+        return response_text
 
 
 # Global agent manager instance

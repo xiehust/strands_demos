@@ -1,0 +1,133 @@
+# Error Response Contract
+# Platform Gap Completion - FR-001, FR-002, FR-003
+
+openapi: 3.1.0
+info:
+  title: Error Response Schema
+  version: 1.0.0
+
+components:
+  schemas:
+    ErrorResponse:
+      type: object
+      required:
+        - code
+        - message
+      properties:
+        code:
+          type: string
+          description: Machine-readable error code
+          example: AGENT_NOT_FOUND
+          pattern: "^[A-Z][A-Z0-9_]*$"
+          maxLength: 50
+        message:
+          type: string
+          description: User-friendly error message
+          example: The requested agent could not be found.
+          maxLength: 500
+        detail:
+          type: string
+          description: Technical detail for debugging (optional)
+          example: "Agent with ID 'abc-123' does not exist in database"
+          maxLength: 2000
+        suggested_action:
+          type: string
+          description: Actionable guidance for user (optional)
+          example: Please check the agent ID and try again.
+          maxLength: 200
+        request_id:
+          type: string
+          description: Request correlation ID for support
+          example: req_abc123xyz
+          format: uuid
+
+    # Specific error types
+    ValidationError:
+      allOf:
+        - $ref: '#/components/schemas/ErrorResponse'
+        - type: object
+          properties:
+            code:
+              example: VALIDATION_FAILED
+            fields:
+              type: array
+              items:
+                type: object
+                properties:
+                  field:
+                    type: string
+                  error:
+                    type: string
+
+    AuthenticationError:
+      allOf:
+        - $ref: '#/components/schemas/ErrorResponse'
+        - type: object
+          properties:
+            code:
+              enum:
+                - AUTH_TOKEN_MISSING
+                - AUTH_TOKEN_INVALID
+                - AUTH_TOKEN_EXPIRED
+
+    RateLimitError:
+      allOf:
+        - $ref: '#/components/schemas/ErrorResponse'
+        - type: object
+          properties:
+            code:
+              example: RATE_LIMIT_EXCEEDED
+            retry_after:
+              type: integer
+              description: Seconds until rate limit resets
+              example: 60
+
+    ServiceUnavailableError:
+      allOf:
+        - $ref: '#/components/schemas/ErrorResponse'
+        - type: object
+          properties:
+            code:
+              example: SERVICE_UNAVAILABLE
+            message:
+              example: Service temporarily unavailable. Please try again later.
+
+  responses:
+    BadRequest:
+      description: Validation error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ValidationError'
+
+    Unauthorized:
+      description: Authentication required
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/AuthenticationError'
+
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+    TooManyRequests:
+      description: Rate limit exceeded
+      headers:
+        Retry-After:
+          schema:
+            type: integer
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/RateLimitError'
+
+    ServiceUnavailable:
+      description: Service unavailable (e.g., DynamoDB down)
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ServiceUnavailableError'

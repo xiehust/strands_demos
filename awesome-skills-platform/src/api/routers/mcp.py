@@ -6,6 +6,7 @@ from typing import List
 
 from src.schemas.mcp import MCPServerCreate, MCPServerUpdate, MCPServerResponse
 from src.database.dynamodb import db_client
+from src.core.mcp_manager import mcp_manager
 
 router = APIRouter(prefix="/mcp", tags=["mcp"])
 
@@ -78,4 +79,58 @@ def delete_mcp_server(mcp_id: str):
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to delete MCP server"
+        )
+
+
+@router.post("/{mcp_id}/test")
+def test_mcp_connection(mcp_id: str):
+    """Test connection to an MCP server and list available tools."""
+    # Check if MCP server exists
+    existing_mcp = db_client.get_mcp_server(mcp_id)
+    if not existing_mcp:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"MCP server with id {mcp_id} not found"
+        )
+
+    # Test connection
+    result = mcp_manager.test_mcp_connection(mcp_id)
+
+    # Update MCP server status in database
+    if result["status"] == "online":
+        db_client.update_mcp_server(mcp_id, {"status": "online"})
+    elif result["status"] == "error":
+        db_client.update_mcp_server(mcp_id, {"status": "error"})
+
+    return result
+
+
+@router.get("/{mcp_id}/tools")
+def list_mcp_tools(mcp_id: str):
+    """List all tools available from an MCP server."""
+    # Check if MCP server exists
+    existing_mcp = db_client.get_mcp_server(mcp_id)
+    if not existing_mcp:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"MCP server with id {mcp_id} not found"
+        )
+
+    try:
+        tools = mcp_manager.get_mcp_tools(mcp_id)
+        return {
+            "mcp_id": mcp_id,
+            "tool_count": len(tools),
+            "tools": [
+                {
+                    "name": tool.name if hasattr(tool, 'name') else str(tool),
+                    "description": tool.description if hasattr(tool, 'description') else "",
+                }
+                for tool in tools
+            ]
+        }
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to list tools: {str(e)}"
         )

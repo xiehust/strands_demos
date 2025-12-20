@@ -4,9 +4,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**Awesome Skills Platform** is a production-grade AI agent platform powered by AWS Bedrock AgentCore Runtime, Strands Agents SDK, and Claude models. The platform enables users to create customizable AI agents with dynamic skill loading and Model Context Protocol (MCP) server integration.
+**Awesome Skills Platform** is an AI agent platform powered by Strands Agents SDK and AWS Bedrock Claude models. The platform enables users to create customizable AI agents with dynamic skill loading and Model Context Protocol (MCP) server integration.
 
-**Current Status**: Phase 5 Partial - Skill基础架构完成，待Agent集成 (Week 6-7)
+**Architecture**: Simplified - Agents run directly in FastAPI backend (no AgentCore Runtime dependency).
+
+**Current Status**: Phase 5-8 Complete ✅ - 核心功能全部就绪 (Week 7)
 
 **Archtecture Design**: [ARCHITECTURE.md](./ARCHITECTURE.md)
 
@@ -15,9 +17,12 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - Phase 1 (✅ Complete): Frontend static pages with mock data
 - Phase 2 (✅ Complete): FastAPI backend with Agent/Skill/MCP CRUD
 - Phase 3 (✅ Complete): Frontend-backend integration with TanStack Query and Vite proxy
-- Phase 4 (✅ Complete): AgentCore Runtime integration - Basic async chat working
-- Phase 5 (⚠️ 60% Complete): Skill system - skill_tool.py完成，10+ skills可用，待Agent集成
-- **Next Priority**: Integrate skill_tool.py into agent_manager.py + Connect ChatPage to API
+- Phase 4 (✅ Complete): Strands Agent integration - Basic async chat working
+- Phase 5 (✅ Complete): Skill system - 15 skills fully integrated with agents (2025-11-18)
+- Phase 6 (✅ Complete): MCP integration - 3 connection types, tool discovery (2025-11-18)
+- Phase 7 (✅ Complete): In-memory conversation storage (simplified from AgentCore Memory)
+- Phase 8 (✅ Complete): Real-time streaming chat with SSE - Frontend fully connected (2025-11-18)
+- **Next Priority**: Phase 9 - AWS production deployment (optional)
 
 ## Core Technologies
 
@@ -31,19 +36,16 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ### Backend (`/src/`)
 - **FastAPI** - REST API framework with Pydantic validation
-- **Strands Agents SDK** (`strands-agents>=1.13.0`)
+- **Strands Agents SDK** (`strands-agents>=1.13.0`) - Agents run directly in backend
 - **Python 3.12-3.13** (configured in pyproject.toml)
-- **AWS Bedrock AgentCore Runtime** for serverless agent execution (Phase 4)
-- **AgentCore Memory** for semantic conversation storage (Phase 7)
+- **In-memory conversation storage** - Simple session-based history
 - **DynamoDB** for metadata storage (agents, skills, MCPs)
 - **boto3** for AWS service integration
 
-### Key AWS Services (Architecture)
-- **AgentCore Runtime**: Serverless agent execution platform
-- **AgentCore Memory**: Event-based and semantic memory storage
+### Key AWS Services
 - **Bedrock Models**: Claude Sonnet 4.5, Haiku, etc.
 - **DynamoDB**: Metadata and configuration storage
-- **S3**: Skill ZIP package storage
+- **S3**: Skill ZIP package storage (optional)
 
 ## Repository Structure
 
@@ -183,63 +185,96 @@ import { useState } from 'react'; // Runtime import
 import { ReactNode, ButtonHTMLAttributes } from 'react';
 ```
 
-### 3. Skills System Architecture ⚠️ **60% Complete - Need Agent Integration**
+### 3. Skills System Architecture ✅ **100% Complete - Fully Integrated**
 
 Skills are **dynamic tool packages** loaded at agent runtime:
 
-- **Location**: `src/skills/{skill_name}/`
+- **Location**: `src/agentcore_runtime/skills/{skill_name}/`
 - **Manifest**: Each skill has a `SKILL.md` with YAML frontmatter
 - **Loading**: `skill_tool.py` (221 lines) scans directories and generates tool definitions
-- **Storage**: Skill ZIPs stored in S3, synced to AgentCore Runtime `/tmp` ❌ **Not implemented**
+- **Storage**: Skill ZIPs stored in S3, synced to AgentCore Runtime `/tmp` ⚠️ **Enhancement feature (optional)**
 - **Tool Generation**: Skills become callable tools via `generate_skill_tool()`
 
-**Current Status (2025-11-01)**:
+**Current Status (2025-11-18)**:
 - ✅ skill_tool.py core implementation complete
-- ✅ 10+ skills with SKILL.md ready (xlsx, docx, pptx, pdf, etc.)
+- ✅ 15 skills with SKILL.md loaded (xlsx, docx, pptx, pdf, theme-factory, etc.)
 - ✅ SkillToolInterceptor with 3 event hooks
-- ❌ **NOT integrated into agent_manager.py** - agents cannot use skills yet
-- ❌ Skill ZIP upload/S3 storage not implemented
+- ✅ **FULLY integrated into agent_manager.py** - agents can use skills
+- ✅ **End-to-end testing passed** - Agent successfully uses skills
+- ⚠️ Skill ZIP upload/S3 storage not implemented (optional enhancement)
 
 **Example Skill Structure:**
 ```
-src/skills/xlsx/
+src/agentcore_runtime/skills/xlsx/
 ├── SKILL.md          # Skill manifest with YAML frontmatter
 ├── recalc.py         # Python utilities (optional)
 └── ...
 ```
 
-**Planned Skill Invocation Flow** (not yet working):
+**Current Skill Invocation Flow** (fully working):
 1. User enables skill in agent configuration (DynamoDB: agent.skillIds)
-2. agent_manager.py loads enabled skills via skill_tool.py ❌ **TODO**
+2. agent_manager.py loads enabled skills via skill_tool.py ✅ **WORKING**
 3. `generate_skill_tool()` creates a tool with SKILL.md as context
-4. Agent invokes skill like: `<skill>xlsx</skill><command>read file.xlsx</command>`
+4. Agent invokes skill like: `Skill(command="xlsx")`
 5. SkillToolInterceptor hooks capture and inject SKILL.md content
+6. Agent processes skill instructions and performs requested tasks
 
-**Next Step**: Connect skill_tool.py to agent_manager.py (1-2 days)
+**Completed**: skill_tool.py fully integrated with agent_manager.py
 
-### 4. AgentCore Runtime Deployment ✅ **Basic Integration Complete**
+### 4. Model Context Protocol (MCP) Integration ✅ **100% Complete - Fully Working**
 
-**Current State (2025-11-01)**: Phase 4 complete - Basic async chat working
+MCP allows agents to connect to **external tool servers** and use their capabilities:
+
+- **Location**: `src/core/mcp_manager.py` (215 lines)
+- **Connection Types**: stdio, SSE (Server-Sent Events), HTTP (Streamable)
+- **Lifecycle Management**: Managed approach - Agent handles MCP client sessions automatically
+- **Tool Discovery**: Automatic via `list_tools_sync()`
+
+**Current Status (2025-11-18)**:
+- ✅ MCP Manager implemented with 3 connection types
+- ✅ Fully integrated into agent_manager.py
+- ✅ **End-to-end testing passed** - Calculator MCP server
+- ✅ Agent successfully used MCP tools (multiply: 25 × 48 = 1,200)
+- ⚠️ Tool filtering and auto health-check (optional enhancements)
+
+**Example MCP Configuration** (DynamoDB):
+```json
+{
+  "id": "mcp-calculator",
+  "name": "Calculator Server",
+  "connectionType": "http",
+  "endpoint": "http://localhost:8000/mcp/",
+  "config": {},
+  "status": "online"
+}
+```
+
+**Current MCP Integration Flow** (fully working):
+1. User enables MCP server in agent configuration (DynamoDB: agent.mcpIds)
+2. agent_manager.py loads MCP client via mcp_manager.py ✅ **WORKING**
+3. `MCPClient` passed directly to Agent (managed lifecycle approach)
+4. Agent automatically manages MCP client session lifecycle
+5. Agent discovers available tools via `list_tools_sync()`
+6. Agent invokes MCP tools during conversation
+7. MCP server executes tool and returns result
+
+**API Endpoints**:
+- `POST /api/mcp/{mcp_id}/test` - Test connection and list tools
+- `GET /api/mcp/{mcp_id}/tools` - List all available tools
+
+**Completed**: MCP fully integrated with agents, tested with Calculator server
+
+### 5. Agent Runtime (Simplified Architecture) ✅ **Complete**
+
+**Current State**: Agents run directly in FastAPI backend (no AgentCore Runtime dependency)
 
 **Implemented**:
-- ✅ Strands Agent SDK v1.14.0 integrated
+- ✅ Strands Agent SDK integrated
 - ✅ BedrockModel configured (Claude Sonnet 4.5)
-- ✅ agent_manager.py with Agent lifecycle management (198 lines)
+- ✅ agent_manager.py with Agent lifecycle management
 - ✅ POST /api/chat endpoint (async conversation)
 - ✅ In-memory conversation storage
 - ✅ Temperature, max_tokens, prompt caching support
-
-**Not Yet Implemented**:
-- ❌ AgentCore Runtime deployment (push to serverless)
-- ❌ AgentCore ARN storage in DynamoDB
-- ❌ `agentcore launch` CLI integration
-- ❌ Thinking mode configuration (awaiting SDK support)
-
-**Planned Future Architecture:**
-- Agents deploy to **AgentCore Runtime** (serverless)
-- Each agent gets an **AgentCore ARN** stored in DynamoDB
-- Runtime auto-scales, no infrastructure management
-- Use `agentcore launch` CLI for deployment
 
 **Agent Configuration (from DynamoDB):**
 ```typescript
@@ -249,8 +284,6 @@ interface Agent {
   modelId: string;              // e.g., "us.anthropic.claude-sonnet-4-5-20250929-v1:0"
   temperature: number;
   maxTokens: number;
-  thinkingEnabled: boolean;
-  thinkingBudget: number;       // Extended thinking budget
   systemPrompt?: string;
   skillIds: string[];           // Enabled skills
   mcpIds: string[];             // Connected MCP servers
@@ -258,21 +291,50 @@ interface Agent {
 }
 ```
 
-### 5. Model Context Protocol (MCP) Integration
+### 6. Conversation Memory (In-Memory Storage) ✅ **Complete**
 
-**Planned**: Phase 6 - MCP server connection and tool integration
+**Current State**: Simple in-memory conversation storage (no external dependencies)
 
-**Three Connection Types:**
-- **stdio**: `MCPClient.from_stdio_server()` for local processes
-- **SSE**: `MCPClient.from_sse_server()` for Server-Sent Events
-- **HTTP**: `MCPClient.from_streamable_http_server()` for HTTP streaming
+**Implemented**:
+- ✅ Memory Manager (`src/core/memory_manager.py`)
+- ✅ Session-based conversation tracking
+- ✅ ConversationSession dataclass for message history
+- ✅ Agent-Memory integration (agent_manager.py)
 
-**MCP Tools**: Dynamically discovered from connected MCP servers
-- Tools exposed by MCP servers become available to agents
-- Support for tool whitelisting/blacklisting
-- Connection health monitoring and auto-reconnect
+**How It Works**:
+1. conversation_id from frontend maps to session_id in memory
+2. Each session stores message history (user/assistant messages)
+3. Messages persist within server lifetime
+4. Server restart clears all conversations
 
-### 6. Data Management Strategy
+**Note**: For production persistence, consider adding DynamoDB or Redis storage
+
+### 7. Real-Time Streaming Chat ✅ **Complete (Phase 8)**
+
+**Current State (2025-11-18)**: SSE-based streaming fully implemented
+
+**Implemented**:
+- ✅ Backend SSE endpoint (`POST /api/chat/stream`)
+- ✅ Frontend streaming service (`services/chat.ts`)
+- ✅ `useChat` hook for managing streaming state
+- ✅ Real-time text accumulation with blinking cursor
+- ✅ Thinking blocks visualization
+- ✅ Cancel stream support (AbortController)
+- ✅ Auto-scroll to bottom
+- ✅ **User browser testing passed**
+
+**Implementation Details**:
+- Uses **Server-Sent Events (SSE)** instead of WebSocket
+- Fetch API with ReadableStream for client-side streaming
+- Event types: `start`, `text`, `thinking`, `tool_use`, `tool_result`, `done`, `error`
+- Real-time message accumulation in `useChat` hook
+
+**Not Implemented** (optional enhancements):
+- ❌ Markdown rendering with syntax highlighting
+- ❌ Code block copy buttons
+- ❌ Message editing/regeneration
+
+### 8. Data Management Strategy
 
 **Current (Phase 3)**: Frontend uses real API calls with TanStack Query
 
@@ -283,7 +345,7 @@ interface Agent {
 - Data caching with 5-minute staleTime
 - Optimistic updates with query invalidation
 
-**Note:** ChatPage still uses mock conversation data (will be replaced in Phase 8 with WebSocket streaming)
+**Note:** ChatPage now uses real-time SSE streaming (Phase 8 complete - 2025-11-18)
 
 ## Development Workflow
 
@@ -433,11 +495,11 @@ Benefits:
 
 ### Why Strands Agents SDK?
 
-- **AgentCore Native**: First-class integration with AWS Bedrock AgentCore Runtime
-- **Built-in Memory**: Automatic integration with AgentCore Memory service
+- **Flexible Deployment**: Can run standalone or with AgentCore Runtime
 - **MCP Support**: `MCPClient` for Model Context Protocol servers
 - **Tool System**: Dynamic tool loading and invocation
 - **Event Hooks**: `BeforeModelCallEvent`, `AfterToolCallEvent`, `MessageAddedEvent`
+- **Bedrock Integration**: Native support for AWS Bedrock models
 
 ### Why DynamoDB?
 
@@ -530,22 +592,22 @@ pytest src/tests/integration/
 | Phase 1 | ✅ Complete | Frontend static pages with mock data |
 | Phase 2 | ✅ Complete | FastAPI backend with Agent/Skill/MCP CRUD + DynamoDB |
 | Phase 3 | ✅ Complete | Frontend-backend integration with TanStack Query + Vite proxy |
-| Phase 4 | ✅ Complete | AgentCore Runtime integration - Basic async chat |
-| Phase 5 | ⚠️ 60% | skill_tool.py (221 lines), 10+ skills, need Agent integration |
-| Phase 6 | Not Started | MCP server integration |
-| Phase 7 | Not Started | AgentCore Memory integration |
-| Phase 8 | Not Started | WebSocket streaming |
+| Phase 4 | ✅ Complete | Strands Agent integration - Basic async chat |
+| Phase 5 | ✅ Complete | Skill system - 15 skills fully integrated (2025-11-18) |
+| Phase 6 | ✅ Complete | MCP integration - 3 connection types, tool discovery (2025-11-18) |
+| Phase 7 | ✅ Complete | In-memory conversation storage (simplified) |
+| Phase 8 | ✅ Complete | SSE streaming chat - Real-time frontend integration (2025-11-18) |
 | Phase 9 | Not Started | AWS deployment (ECS, ALB, S3) |
 | Phase 10 | Not Started | Testing and optimization |
 | Phase 11 | Not Started | Production launch |
 
-**Current Milestone**: Week 6-7 - Skill system partial, need integration
-- Frontend: http://localhost:5173/ (ChatPage still uses mock data)
-- Backend: http://localhost:8000 (Chat API works, skills not integrated)
+**Current Milestone**: Week 7 - Phases 5-8 Complete - AI Agent Platform Ready!
+- Frontend: http://localhost:5173/ (Full-featured chat interface with streaming)
+- Backend: http://localhost:8000 (Skills, MCP integrated, agents run directly)
 - API Docs: http://localhost:8000/docs
-- **Next High Priority**:
-  1. Integrate skill_tool.py into agent_manager.py (1-2 days)
-  2. Connect ChatPage to /api/chat endpoint (2-3 days)
+- **Architecture**: Simplified - no AgentCore Runtime dependency
+- **Next Priority**:
+  - Phase 9: AWS production deployment (optional - system is fully functional locally)
 
 ## Quick Reference
 
@@ -578,9 +640,8 @@ AWS_PROFILE=default  # Optional, for local development
 # DynamoDB
 DYNAMODB_TABLE_PREFIX=awesome-skills-platform  # Optional, defaults to this
 
-# Future (Phase 4+)
-AGENTCORE_MEMORY_ID=<memory_id>  # Phase 7
-S3_SKILLS_BUCKET=agent-platform-skills  # Phase 5
+# Optional
+S3_SKILLS_BUCKET=agent-platform-skills  # For skill ZIP storage (optional)
 JWT_SECRET=<secret>  # Authentication (future)
 ```
 
@@ -589,8 +650,9 @@ JWT_SECRET=<secret>  # Authentication (future)
 # Uses Vite proxy - no need for explicit API URL
 # All /api/* requests automatically proxied to http://localhost:8000
 
-# Future (Phase 8)
-VITE_WS_URL=ws://localhost:8000  # WebSocket endpoint
+# Phase 8 Complete (2025-11-18)
+# Uses SSE streaming via /api/chat/stream endpoint
+# No additional environment variables needed
 ```
 
 ### Design System Reference

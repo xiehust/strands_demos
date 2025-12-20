@@ -1,23 +1,14 @@
-import { useState } from 'react';
-import { useQuery, useMutation } from '@tanstack/react-query';
-import { chatApi } from '../services/chat';
+import { useState, useEffect, useRef } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { agentsApi } from '../services/agents';
 import { Button } from '../components/common/Button';
-import type { ChatResponse, Agent } from '../types';
-
-interface ConversationMessage {
-  id: string;
-  role: 'user' | 'assistant';
-  content: string;
-  thinking?: string[];
-  timestamp: string;
-}
+import { useChat } from '../hooks/useChat';
+import type { Agent } from '../types';
 
 export function ChatPage() {
   const [selectedAgentId, setSelectedAgentId] = useState<string>('');
-  const [conversationId, setConversationId] = useState<string>('');
-  const [messages, setMessages] = useState<ConversationMessage[]>([]);
   const [inputMessage, setInputMessage] = useState('');
+  const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Load available agents
   const { data: agents, isLoading: agentsLoading } = useQuery({
@@ -25,60 +16,46 @@ export function ChatPage() {
     queryFn: agentsApi.list,
   });
 
-  // Send message mutation
-  const sendMessageMutation = useMutation({
-    mutationFn: chatApi.sendMessage,
-    onSuccess: (response: ChatResponse) => {
-      // Update conversation ID if it's a new conversation
-      if (!conversationId) {
-        setConversationId(response.conversationId);
-      }
-
-      // Add assistant's response to messages
-      const assistantMessage: ConversationMessage = {
-        id: `msg-${Date.now()}`,
-        role: 'assistant',
-        content: response.message,
-        thinking: response.thinking,
-        timestamp: response.timestamp,
-      };
-      setMessages((prev) => [...prev, assistantMessage]);
-    },
-    onError: (error) => {
-      console.error('Failed to send message:', error);
-      alert('Failed to send message. Please try again.');
-    },
+  // Use the useChat hook for streaming chat
+  const {
+    messages,
+    isStreaming,
+    error,
+    sendMessage,
+    cancelStream,
+    clearMessages,
+    conversationId,
+  } = useChat({
+    agentId: selectedAgentId,
   });
 
-  const handleSendMessage = () => {
-    if (!inputMessage.trim() || !selectedAgentId) {
+  // Auto-scroll to bottom when new messages arrive
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages]);
+
+  const handleSendMessage = async () => {
+    if (!inputMessage.trim() || !selectedAgentId || isStreaming) {
       return;
     }
 
-    // Add user message to UI immediately
-    const userMessage: ConversationMessage = {
-      id: `msg-${Date.now()}`,
-      role: 'user',
-      content: inputMessage,
-      timestamp: new Date().toISOString(),
-    };
-    setMessages((prev) => [...prev, userMessage]);
+    const message = inputMessage;
+    setInputMessage(''); // Clear input immediately
 
-    // Send to API
-    sendMessageMutation.mutate({
-      agentId: selectedAgentId,
-      message: inputMessage,
-      conversationId: conversationId || undefined,
-    });
-
-    // Clear input
-    setInputMessage('');
+    try {
+      await sendMessage(message);
+    } catch (err) {
+      console.error('Failed to send message:', err);
+    }
   };
 
   const handleNewChat = () => {
-    setConversationId('');
-    setMessages([]);
+    clearMessages();
     setInputMessage('');
+  };
+
+  const handleCancelStream = () => {
+    cancelStream();
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -125,7 +102,7 @@ export function ChatPage() {
           )}
         </div>
 
-        {/* Conversation History (placeholder) */}
+        {/* Conversation History */}
         <div className="flex-1 overflow-y-auto p-2">
           {conversationId ? (
             <div className="p-3 bg-primary rounded-lg">
@@ -165,6 +142,12 @@ export function ChatPage() {
             </h1>
           </div>
           <div className="flex items-center gap-4">
+            {isStreaming && (
+              <Button variant="secondary" size="sm" onClick={handleCancelStream}>
+                <span className="material-symbols-outlined text-sm">stop_circle</span>
+                Cancel
+              </Button>
+            )}
             <button className="p-2 hover:bg-gray-800 rounded-lg transition-colors">
               <span className="material-symbols-outlined">code</span>
             </button>
@@ -190,51 +173,72 @@ export function ChatPage() {
               </div>
             </div>
           ) : (
-            messages.map((message) => (
-              <div key={message.id} className="flex gap-4">
-                <div className="flex-shrink-0 w-10 h-10 rounded-full bg-gray-700 flex items-center justify-center">
-                  <span className="material-symbols-outlined">
-                    {message.role === 'user' ? 'person' : 'smart_toy'}
-                  </span>
-                </div>
-                <div className="flex-1">
-                  <div className="flex items-baseline gap-2 mb-2">
-                    <span className="font-semibold">
-                      {message.role === 'user' ? 'You' : 'AI Agent'}
-                    </span>
-                    <span className="text-sm text-text-muted">
-                      {new Date(message.timestamp).toLocaleTimeString()}
+            <>
+              {messages.map((message, index) => (
+                <div key={`msg-${index}`} className="flex gap-4">
+                  <div className="flex-shrink-0 w-10 h-10 rounded-full bg-gray-700 flex items-center justify-center">
+                    <span className="material-symbols-outlined">
+                      {message.role === 'user' ? 'person' : 'smart_toy'}
                     </span>
                   </div>
-
-                  {/* Thinking Block */}
-                  {message.thinking && message.thinking.length > 0 && (
-                    <div className="mb-3 p-3 bg-gray-800 rounded-lg border border-gray-700">
-                      <div className="flex items-center gap-2 text-sm text-text-muted mb-2">
-                        <span className="material-symbols-outlined text-base">psychology</span>
-                        <span className="font-medium">Thinking...</span>
-                      </div>
-                      <div className="space-y-2">
-                        {message.thinking.map((thought, idx) => (
-                          <p key={idx} className="text-sm italic text-gray-300">
-                            {thought}
-                          </p>
-                        ))}
-                      </div>
+                  <div className="flex-1">
+                    <div className="flex items-baseline gap-2 mb-2">
+                      <span className="font-semibold">
+                        {message.role === 'user' ? 'You' : 'AI Agent'}
+                      </span>
+                      {message.timestamp && (
+                        <span className="text-sm text-text-muted">
+                          {new Date(message.timestamp).toLocaleTimeString()}
+                        </span>
+                      )}
                     </div>
-                  )}
 
-                  {/* Message Content */}
-                  <div className="prose prose-invert max-w-none">
-                    <p className="whitespace-pre-wrap">{message.content}</p>
+                    {/* Thinking Block */}
+                    {message.thinking && message.thinking.length > 0 && (
+                      <div className="mb-3 p-3 bg-gray-800 rounded-lg border border-gray-700">
+                        <div className="flex items-center gap-2 text-sm text-text-muted mb-2">
+                          <span className="material-symbols-outlined text-base">psychology</span>
+                          <span className="font-medium">Thinking...</span>
+                        </div>
+                        <div className="space-y-2">
+                          {message.thinking.map((thought: string, idx: number) => (
+                            <p key={idx} className="text-sm italic text-gray-300">
+                              {thought}
+                            </p>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Message Content */}
+                    <div className="prose prose-invert max-w-none">
+                      <p className="whitespace-pre-wrap">
+                        {message.content}
+                        {isStreaming && index === messages.length - 1 && message.role === 'assistant' && (
+                          <span className="inline-block w-2 h-4 bg-primary animate-pulse ml-1" />
+                        )}
+                      </p>
+                    </div>
                   </div>
                 </div>
+              ))}
+              <div ref={messagesEndRef} />
+            </>
+          )}
+
+          {/* Error Display */}
+          {error && (
+            <div className="flex gap-4 p-4 bg-red-900/20 border border-red-700 rounded-lg">
+              <span className="material-symbols-outlined text-red-500">error</span>
+              <div className="flex-1">
+                <p className="font-semibold text-red-500">Error</p>
+                <p className="text-sm text-gray-300">{error}</p>
               </div>
-            ))
+            </div>
           )}
 
           {/* Loading Indicator */}
-          {sendMessageMutation.isPending && (
+          {isStreaming && messages.length > 0 && messages[messages.length - 1].role === 'user' && (
             <div className="flex gap-4">
               <div className="flex-shrink-0 w-10 h-10 rounded-full bg-gray-700 flex items-center justify-center">
                 <span className="material-symbols-outlined">smart_toy</span>
@@ -257,10 +261,12 @@ export function ChatPage() {
               value={inputMessage}
               onChange={(e) => setInputMessage(e.target.value)}
               onKeyPress={handleKeyPress}
-              disabled={!selectedAgentId || sendMessageMutation.isPending}
+              disabled={!selectedAgentId || isStreaming}
               placeholder={
                 selectedAgentId
-                  ? 'Type your message...'
+                  ? isStreaming
+                    ? 'Waiting for response...'
+                    : 'Type your message...'
                   : 'Select an agent first...'
               }
               className="flex-1 bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 focus:outline-none focus:border-primary disabled:opacity-50 disabled:cursor-not-allowed"
@@ -275,7 +281,7 @@ export function ChatPage() {
             <Button
               size="lg"
               onClick={handleSendMessage}
-              disabled={!selectedAgentId || !inputMessage.trim() || sendMessageMutation.isPending}
+              disabled={!selectedAgentId || !inputMessage.trim() || isStreaming}
             >
               <span className="material-symbols-outlined">send</span>
             </Button>
@@ -285,6 +291,7 @@ export function ChatPage() {
               <span>
                 Model: {agents.find((a: Agent) => a.id === selectedAgentId)?.modelId.split('.').pop() || 'Unknown'} •
                 Skills: {agents.find((a: Agent) => a.id === selectedAgentId)?.skillIds.length || 0} enabled
+                {isStreaming && ' • Streaming...'}
               </span>
             )}
           </div>

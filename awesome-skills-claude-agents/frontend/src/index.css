@@ -1,0 +1,65 @@
+@import "tailwindcss";
+
+@theme {
+  --font-family-sans: 'Space Grotesk', system-ui, sans-serif;
+
+  /* Colors */
+  --color-primary: #2b6cee;
+  --color-primary-hover: #1d5cd6;
+  --color-primary-light: #3d7ef0;
+
+  --color-dark-bg: #101622;
+  --color-dark-card: #1a1f2e;
+  --color-dark-hover: #252b3d;
+  --color-dark-border: #2d3548;
+
+  --color-muted: #9da6b9;
+
+  --color-status-online: #22c55e;
+  --color-status-offline: #6b7280;
+  --color-status-error: #ef4444;
+}
+
+/* Base styles */
+html {
+  font-family: var(--font-family-sans);
+}
+
+body {
+  background-color: var(--color-dark-bg);
+  color: white;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-dark-card);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-dark-border);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-muted);
+}
+
+/* Material Icons */
+.material-symbols-outlined {
+  font-variation-settings:
+    'FILL' 0,
+    'wght' 400,
+    'GRAD' 0,
+    'opsz' 24;
+}
+
+/* Custom utilities */
+.glass-effect {
+  background: rgba(26, 31, 46, 0.8);
+  backdrop-filter: blur(10px);
+}
