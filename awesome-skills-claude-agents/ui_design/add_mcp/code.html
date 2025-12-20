@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Agent Platform - Add MCP Server</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300..700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet"/>
+<script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#2b6cee",
+                        "background-light": "#f6f6f8",
+                        "background-dark": "#101622",
+                    },
+                    fontFamily: {
+                        "display": ["Space Grotesk", "sans-serif"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark font-display text-gray-800 dark:text-gray-200">
+<div class="flex h-screen w-full">
+<aside class="flex w-64 flex-col border-r border-gray-200 dark:border-gray-800 bg-white dark:bg-[#111318] p-4">
+<div class="flex flex-col gap-4">
+<div class="flex items-center gap-3 px-3">
+<div class="bg-center bg-no-repeat aspect-square bg-cover rounded-full size-10" data-alt="Abstract blue and purple circular logo" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuCsGtGgPEb-7GqggdljyrQ5NgrsWfSn1dfKDBCfgRLCZ6vGoS9jM-ilGjuABO3n1-Zn4JFcgH8dRZivwmK7cep7xBQ6pBOnim2pczeBLK3NFip4YcygFbldC75_vJjDGyel8Utv38PboThwUfKLAnU1j8PIpDc7OBfTyCYCjlFt1E53FZd54WbVXdcB8iUtqNkHeYJANS2kKHR-8WEXyCKCjwmNX1u1nyywMPXw6ZaG9GBI_tam2teG-k6imBntZzGOeIybOgpHkHub");'></div>
+<div class="flex flex-col">
+<h1 class="text-gray-900 dark:text-white text-base font-medium leading-normal">Agent Platform</h1>
+<p class="text-gray-500 dark:text-[#9da6b9] text-sm font-normal leading-normal">Control Panel</p>
+</div>
+</div>
+<nav class="flex flex-col gap-2 mt-4">
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800" href="#">
+<span class="material-symbols-outlined text-gray-600 dark:text-white">dashboard</span>
+<p class="text-gray-900 dark:text-white text-sm font-medium leading-normal">Dashboard</p>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg bg-primary/10 dark:bg-[#282e39]" href="#">
+<span class="material-symbols-outlined text-primary dark:text-white" style="font-variation-settings: 'FILL' 1;">dns</span>
+<p class="text-primary dark:text-white text-sm font-medium leading-normal">MCP Management</p>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800" href="#">
+<span class="material-symbols-outlined text-gray-600 dark:text-white">memory</span>
+<p class="text-gray-900 dark:text-white text-sm font-medium leading-normal">Agents</p>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800" href="#">
+<span class="material-symbols-outlined text-gray-600 dark:text-white">settings</span>
+<p class="text-gray-900 dark:text-white text-sm font-medium leading-normal">Settings</p>
+</a>
+</nav>
+</div>
+<div class="mt-auto flex flex-col gap-4">
+<button class="flex w-full cursor-pointer items-center justify-center overflow-hidden rounded-lg h-10 px-4 bg-primary text-white text-sm font-bold leading-normal tracking-[0.015em] hover:bg-primary/90">
+<span class="truncate">New Agent</span>
+</button>
+<div class="flex flex-col gap-1">
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800" href="#">
+<span class="material-symbols-outlined text-gray-600 dark:text-white">help_outline</span>
+<p class="text-gray-900 dark:text-white text-sm font-medium leading-normal">Support</p>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800" href="#">
+<span class="material-symbols-outlined text-gray-600 dark:text-white">description</span>
+<p class="text-gray-900 dark:text-white text-sm font-medium leading-normal">Docs</p>
+</a>
+</div>
+</div>
+</aside>
+<main class="flex-1 flex-col overflow-y-auto">
+<div class="p-8">
+<div class="flex flex-col gap-1 mb-6">
+<a class="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 hover:text-primary dark:hover:text-primary/80 transition-colors w-fit" href="#">
+<span class="material-symbols-outlined text-base">arrow_back</span>
+<span>Back to MCP Management</span>
+</a>
+<h1 class="text-gray-900 dark:text-white text-3xl font-black leading-tight tracking-[-0.033em]">Add New MCP Server</h1>
+<p class="text-gray-500 dark:text-[#9da6b9] text-base font-normal leading-normal">Configure and add a new server to your management platform.</p>
+</div>
+<div class="max-w-3xl mx-auto">
+<div class="bg-white dark:bg-[#1c1f27] rounded-xl border border-gray-200 dark:border-[#3b4354] p-6 sm:p-8">
+<form class="space-y-6" x-data="{ serverType: 'http' }">
+<div>
+<label class="block text-sm font-medium text-gray-800 dark:text-gray-200 mb-1.5" for="server-name">Server Name</label>
+<input class="w-full h-10 px-3 rounded-lg border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900/50 focus:ring-primary focus:border-primary text-sm placeholder:text-gray-400 dark:placeholder:text-gray-600" id="server-name" name="server-name" placeholder="e.g., Production-Cluster-A" type="text"/>
+</div>
+<div>
+<label class="block text-sm font-medium text-gray-800 dark:text-gray-200 mb-1.5" for="server-type">Type</label>
+<select class="w-full h-10 px-3 rounded-lg border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900/50 focus:ring-primary focus:border-primary text-sm" id="server-type" name="server-type" x-model="serverType">
+<option value="http">HTTP</option>
+<option value="stdio">Stdio</option>
+</select>
+</div>
+<div class="space-y-6" x-show="serverType === 'http'">
+<div>
+<label class="block text-sm font-medium text-gray-800 dark:text-gray-200 mb-1.5" for="server-address">Server Address</label>
+<input class="w-full h-10 px-3 rounded-lg border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900/50 focus:ring-primary focus:border-primary text-sm placeholder:text-gray-400 dark:placeholder:text-gray-600" id="server-address" name="server-address" placeholder="e.g., http://192.168.1.100:8080" type="text"/>
+</div>
+<div>
+<label class="block text-sm font-medium text-gray-800 dark:text-gray-200 mb-1.5" for="headers">Headers</label>
+<textarea class="w-full px-3 py-2 rounded-lg border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900/50 focus:ring-primary focus:border-primary text-sm placeholder:text-gray-400 dark:placeholder:text-gray-600" id="headers" name="headers" placeholder="e.g., Authorization: Bearer &lt;token&gt;" rows="3"></textarea>
+</div>
+</div>
+<div class="space-y-6" x-cloak="" x-show="serverType === 'stdio'">
+<div>
+<label class="block text-sm font-medium text-gray-800 dark:text-gray-200 mb-1.5" for="command">Command</label>
+<input class="w-full h-10 px-3 rounded-lg border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900/50 focus:ring-primary focus:border-primary text-sm placeholder:text-gray-400 dark:placeholder:text-gray-600" id="command" name="command" placeholder="e.g., /path/to/executable" type="text"/>
+</div>
+<div>
+<label class="block text-sm font-medium text-gray-800 dark:text-gray-200 mb-1.5" for="args">Args</label>
+<input class="w-full h-10 px-3 rounded-lg border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900/50 focus:ring-primary focus:border-primary text-sm placeholder:text-gray-400 dark:placeholder:text-gray-600" id="args" name="args" placeholder="e.g., --config /path/to/config.json" type="text"/>
+</div>
+<div>
+<label class="block text-sm font-medium text-gray-800 dark:text-gray-200 mb-1.5" for="env">Env</label>
+<textarea class="w-full px-3 py-2 rounded-lg border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900/50 focus:ring-primary focus:border-primary text-sm placeholder:text-gray-400 dark:placeholder:text-gray-600" id="env" name="env" placeholder="e.g., KEY=VALUE (one per line)" rows="3"></textarea>
+</div>
+</div>
+<div class="border-t border-gray-200 dark:border-gray-700 pt-6 flex justify-end gap-3">
+<button class="flex min-w-[84px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-10 px-4 bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200 text-sm font-bold leading-normal tracking-[0.015em] hover:bg-gray-200 dark:hover:bg-gray-700" type="button">
+<span class="truncate">Cancel</span>
+</button>
+<button class="flex min-w-[84px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-10 px-4 bg-primary text-white text-sm font-bold leading-normal tracking-[0.015em] hover:bg-primary/90" type="submit">
+<span class="truncate">Save</span>
+</button>
+</div>
+</form>
+</div>
+</div>
+</div>
+</main>
+</div>
+<script defer="" src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+
+</body></html>

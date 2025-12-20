@@ -1,0 +1,81 @@
+"""Message and Chat-related Pydantic models."""
+from pydantic import BaseModel, Field
+from typing import Literal, Any
+from datetime import datetime
+
+
+class ChatRequest(BaseModel):
+    """Request model for chat."""
+
+    agent_id: str
+    message: str
+    session_id: str | None = None
+    enable_skills: bool = False
+    enable_mcp: bool = False
+
+
+class TextContent(BaseModel):
+    """Text content block."""
+
+    type: Literal["text"] = "text"
+    text: str
+
+
+class ToolUseContent(BaseModel):
+    """Tool use content block."""
+
+    type: Literal["tool_use"] = "tool_use"
+    id: str
+    name: str
+    input: dict[str, Any]
+
+
+class ToolResultContent(BaseModel):
+    """Tool result content block."""
+
+    type: Literal["tool_result"] = "tool_result"
+    tool_use_id: str
+    content: str | None = None
+    is_error: bool = False
+
+
+ContentBlock = TextContent | ToolUseContent | ToolResultContent
+
+
+class AssistantMessageResponse(BaseModel):
+    """Response model for assistant message."""
+
+    type: Literal["assistant"] = "assistant"
+    content: list[dict[str, Any]]
+    model: str | None = None
+
+
+class ResultMessageResponse(BaseModel):
+    """Response model for result message."""
+
+    type: Literal["result"] = "result"
+    session_id: str
+    duration_ms: int
+    total_cost_usd: float | None = None
+    num_turns: int
+    is_error: bool = False
+
+
+class ChatSession(BaseModel):
+    """Chat session model."""
+
+    id: str
+    agent_id: str
+    title: str
+    created_at: datetime
+    last_accessed_at: datetime
+
+
+class ChatSessionResponse(BaseModel):
+    """Response model for chat session."""
+
+    id: str
+    agent_id: str
+    title: str
+    created_at: str
+    last_accessed_at: str

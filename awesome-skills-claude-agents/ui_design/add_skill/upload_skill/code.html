@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Agent Platform - Upload Skill</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "primary": "#2b6cee",
+              "background-light": "#f6f6f8",
+              "background-dark": "#101622",
+            },
+            fontFamily: {
+              "display": ["Space Grotesk", "sans-serif"]
+            },
+            borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings:
+            'FILL' 0,
+            'wght' 400,
+            'GRAD' 0,
+            'opsz' 24;
+            font-size: 24px;}
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark font-display text-[#EAEAEA]">
+<div class="relative flex min-h-screen w-full">
+<div class="flex flex-col border-r border-slate-300/10 bg-background-light dark:bg-background-dark/50 w-64 p-4">
+<div class="flex flex-col justify-between h-full">
+<div class="flex flex-col gap-4">
+<div class="flex items-center gap-3 px-2">
+<div class="bg-center bg-no-repeat aspect-square bg-cover rounded-full size-10" data-alt="Abstract logo for the Agent Platform" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuD_L7CT7PZX1bTMwIaLG4rUJEf5zKlN6L4VnzAAt-U3tOwVBZI83NsKzZ1q3i0AQvow1sULeu8MxeCMYVTBC_WwMAHGFZYGaKXPfEes-U32bA6NxgfSsphJuZXaegpY52ZohJIE_jDSzlrWsLb5liPseIJARSD5w2S9rk800o9x092nL51NFMraxQFtdFzrIPWVJ3KOZBh-g5liFdLQGKOxW98slxqcnOTKJhEDMabUWZ7DPLFYvSyJ-ebL22Ia3sUBLQMIJsLlrae-");'></div>
+<div class="flex flex-col">
+<h1 class="text-slate-900 dark:text-white text-base font-bold leading-normal">Agent Platform</h1>
+<p class="text-slate-500 dark:text-slate-400 text-sm font-normal leading-normal">Workspace</p>
+</div>
+</div>
+<div class="flex flex-col gap-2 mt-4">
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-primary/20 hover:text-slate-900 dark:hover:text-white transition-colors duration-200" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<p class="text-sm font-medium leading-normal">Dashboard</p>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-primary/20 hover:text-slate-900 dark:hover:text-white transition-colors duration-200" href="#">
+<span class="material-symbols-outlined">smart_toy</span>
+<p class="text-sm font-medium leading-normal">Agents</p>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg bg-primary/20 text-primary dark:text-white dark:bg-primary/30" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">build</span>
+<p class="text-sm font-medium leading-normal">Skill Management</p>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-primary/20 hover:text-slate-900 dark:hover:text-white transition-colors duration-200" href="#">
+<span class="material-symbols-outlined">videogame_asset</span>
+<p class="text-sm font-medium leading-normal">Playground</p>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-primary/20 hover:text-slate-900 dark:hover:text-white transition-colors duration-200" href="#">
+<span class="material-symbols-outlined">settings</span>
+<p class="text-sm font-medium leading-normal">Settings</p>
+</a>
+</div>
+</div>
+<div class="flex flex-col gap-1">
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-primary/20 hover:text-slate-900 dark:hover:text-white transition-colors duration-200" href="#">
+<span class="material-symbols-outlined">help</span>
+<p class="text-sm font-medium leading-normal">Help</p>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-primary/20 hover:text-slate-900 dark:hover:text-white transition-colors duration-200" href="#">
+<span class="material-symbols-outlined">logout</span>
+<p class="text-sm font-medium leading-normal">Logout</p>
+</a>
+</div>
+</div>
+</div>
+<main class="flex-1 p-8 overflow-y-auto">
+<div class="max-w-4xl mx-auto flex flex-col h-full">
+<div class="mb-8">
+<a class="inline-flex items-center gap-2 text-slate-500 dark:text-slate-400 hover:text-primary dark:hover:text-white transition-colors duration-200 mb-2" href="#">
+<span class="material-symbols-outlined">arrow_back</span>
+<span class="text-sm font-medium">Back to Skill Management</span>
+</a>
+<h1 class="text-slate-900 dark:text-white text-4xl font-black leading-tight tracking-[-0.033em]">Upload ZIP Skill Package</h1>
+<p class="text-slate-500 dark:text-slate-400 mt-2">Upload a .zip file containing your skill definitions and code.</p>
+</div>
+<div class="flex-grow flex flex-col items-center justify-center bg-white dark:bg-slate-800/20 border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-xl p-8">
+<div class="text-center">
+<span class="material-symbols-outlined text-6xl text-primary">upload_file</span>
+<p class="mt-4 text-lg font-bold text-slate-900 dark:text-white">Drag &amp; Drop your ZIP file here</p>
+<p class="mt-1 text-sm text-slate-500 dark:text-slate-400">or</p>
+<button class="mt-4 flex items-center justify-center gap-2 min-w-[84px] cursor-pointer overflow-hidden rounded-lg h-10 px-4 bg-white dark:bg-slate-700/50 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-900 dark:text-white text-sm font-bold leading-normal tracking-[0.015em] border border-slate-300 dark:border-slate-600 transition-colors duration-200">
+<span class="truncate">Browse Files</span>
+</button>
+</div>
+</div>
+<div class="mt-8 space-y-4">
+<div class="flex items-center gap-4 p-4 bg-white dark:bg-slate-800/20 rounded-lg border border-slate-300/10">
+<div class="p-2 bg-primary/10 rounded-lg">
+<span class="material-symbols-outlined text-primary">folder_zip</span>
+</div>
+<div class="flex-grow">
+<p class="text-sm font-medium text-slate-900 dark:text-white">my-awesome-skill.zip</p>
+<div class="flex items-center gap-2 mt-1">
+<div class="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-1.5">
+<div class="bg-primary h-1.5 rounded-full" style="width: 75%"></div>
+</div>
+<span class="text-xs text-slate-500 dark:text-slate-400">75%</span>
+</div>
+</div>
+<button class="text-slate-500 dark:text-slate-400 hover:text-red-500 transition-colors duration-200">
+<span class="material-symbols-outlined" style="font-size: 20px;">close</span>
+</button>
+</div>
+<div class="flex items-center gap-4 p-4 bg-white dark:bg-slate-800/20 rounded-lg border border-slate-300/10">
+<div class="p-2 bg-green-500/10 rounded-lg">
+<span class="material-symbols-outlined text-green-500">check_circle</span>
+</div>
+<div class="flex-grow">
+<p class="text-sm font-medium text-slate-900 dark:text-white">database-query-skill.zip</p>
+<p class="text-xs text-slate-500 dark:text-slate-400">Upload complete</p>
+</div>
+<button class="text-slate-500 dark:text-slate-400 hover:text-red-500 transition-colors duration-200">
+<span class="material-symbols-outlined" style="font-size: 20px;">delete</span>
+</button>
+</div>
+</div>
+<div class="mt-auto pt-8 flex justify-end gap-3 border-t border-slate-300/10">
+<button class="flex items-center justify-center gap-2 min-w-[84px] cursor-pointer overflow-hidden rounded-lg h-10 px-4 bg-white dark:bg-slate-700/50 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-900 dark:text-white text-sm font-bold leading-normal tracking-[0.015em] border border-slate-300 dark:border-slate-600 transition-colors duration-200">
+<span class="truncate">Cancel</span>
+</button>
+<button class="flex items-center justify-center gap-2 min-w-[84px] cursor-pointer overflow-hidden rounded-lg h-10 px-4 bg-primary hover:bg-primary/90 text-white text-sm font-bold leading-normal tracking-[0.015em] transition-colors duration-200">
+<span class="material-symbols-outlined" style="font-size: 20px;">upload</span>
+<span class="truncate">Upload</span>
+</button>
+</div>
+</div>
+</main>
+</div>
+
+</body></html>

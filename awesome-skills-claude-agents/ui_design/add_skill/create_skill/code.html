@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Agent Platform - Create Skill</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "primary": "#2b6cee",
+              "background-light": "#f6f6f8",
+              "background-dark": "#101622",
+            },
+            fontFamily: {
+              "display": ["Space Grotesk", "sans-serif"]
+            },
+            borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings:
+            'FILL' 0,
+            'wght' 400,
+            'GRAD' 0,
+            'opsz' 24;
+            font-size: 24px;}
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark font-display text-[#EAEAEA]">
+<div class="relative flex min-h-screen w-full">
+<div class="flex flex-col border-r border-slate-300/10 bg-background-light dark:bg-background-dark/50 w-64 p-4">
+<div class="flex flex-col justify-between h-full">
+<div class="flex flex-col gap-4">
+<div class="flex items-center gap-3 px-2">
+<div class="bg-center bg-no-repeat aspect-square bg-cover rounded-full size-10" data-alt="Abstract logo for the Agent Platform" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuD_L7CT7PZX1bTMwIaLG4rUJEf5zKlN6L4VnzAAt-U3tOwVBZI83NsKzZ1q3i0AQvow1sULeu8MxeCMYVTBC_WwMAHGFZYGaKXPfEes-U32bA6NxgfSsphJuZXaegpY52ZohJIE_jDSzlrWsLb5liPseIJARSD5w2S9rk800o9x092nL51NFMraxQFtdFzrIPWVJ3KOZBh-g5liFdLQGKOxW98slxqcnOTKJhEDMabUWZ7DPLFYvSyJ-ebL22Ia3sUBLQMIJsLlrae-");'></div>
+<div class="flex flex-col">
+<h1 class="text-slate-900 dark:text-white text-base font-bold leading-normal">Agent Platform</h1>
+<p class="text-slate-500 dark:text-slate-400 text-sm font-normal leading-normal">Workspace</p>
+</div>
+</div>
+<div class="flex flex-col gap-2 mt-4">
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-primary/20 hover:text-slate-900 dark:hover:text-white transition-colors duration-200" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<p class="text-sm font-medium leading-normal">Dashboard</p>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-primary/20 hover:text-slate-900 dark:hover:text-white transition-colors duration-200" href="#">
+<span class="material-symbols-outlined">smart_toy</span>
+<p class="text-sm font-medium leading-normal">Agents</p>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg bg-primary/20 text-primary dark:text-white dark:bg-primary/30" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">build</span>
+<p class="text-sm font-medium leading-normal">Skill Management</p>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-primary/20 hover:text-slate-900 dark:hover:text-white transition-colors duration-200" href="#">
+<span class="material-symbols-outlined">videogame_asset</span>
+<p class="text-sm font-medium leading-normal">Playground</p>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-primary/20 hover:text-slate-900 dark:hover:text-white transition-colors duration-200" href="#">
+<span class="material-symbols-outlined">settings</span>
+<p class="text-sm font-medium leading-normal">Settings</p>
+</a>
+</div>
+</div>
+<div class="flex flex-col gap-1">
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-primary/20 hover:text-slate-900 dark:hover:text-white transition-colors duration-200" href="#">
+<span class="material-symbols-outlined">help</span>
+<p class="text-sm font-medium leading-normal">Help</p>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-primary/20 hover:text-slate-900 dark:hover:text-white transition-colors duration-200" href="#">
+<span class="material-symbols-outlined">logout</span>
+<p class="text-sm font-medium leading-normal">Logout</p>
+</a>
+</div>
+</div>
+</div>
+<main class="flex-1 p-8 overflow-y-auto">
+<div class="max-w-4xl mx-auto">
+<div class="flex items-center gap-4 mb-8">
+<a class="text-slate-500 dark:text-slate-400 hover:text-primary dark:hover:text-white transition-colors" href="#">
+<span class="material-symbols-outlined">arrow_back</span>
+</a>
+<div>
+<h1 class="text-slate-900 dark:text-white text-4xl font-black leading-tight tracking-[-0.033em]">Create Skill with Agent</h1>
+<p class="text-slate-500 dark:text-slate-400 text-base mt-1">Describe the skill you want to create, and the Agent will generate it for you.</p>
+</div>
+</div>
+<div class="flex flex-col gap-6">
+<div>
+<label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2" for="skill-description">Skill Description</label>
+<textarea class="w-full rounded-xl bg-white dark:bg-background-dark border border-slate-300 dark:border-slate-700 focus:ring-2 focus:ring-primary focus:border-primary text-sm placeholder:text-slate-400 resize-none p-4" id="skill-description" name="skill-description" placeholder="e.g., A skill that takes a city name as input and returns the current weather forecast using an external API." rows="8"></textarea>
+</div>
+<div class="flex justify-end">
+<button class="flex items-center justify-center gap-2 min-w-[84px] cursor-pointer overflow-hidden rounded-lg h-10 px-6 bg-primary hover:bg-primary/90 text-white text-sm font-bold leading-normal tracking-[0.015em] transition-colors duration-200">
+<span class="material-symbols-outlined" style="font-size: 20px;">auto_awesome</span>
+<span class="truncate">Create Skill</span>
+</button>
+</div>
+</div>
+<div class="mt-8 p-6 bg-slate-200/50 dark:bg-slate-800/20 rounded-xl border border-slate-300/10">
+<h2 class="text-slate-900 dark:text-white text-lg font-bold mb-4">Agent Status</h2>
+<div class="flex flex-col gap-4">
+<div class="flex items-start gap-3">
+<div class="w-6 h-6 flex items-center justify-center rounded-full bg-slate-300 dark:bg-slate-700 mt-0.5">
+<span class="material-symbols-outlined text-slate-500 dark:text-slate-400" style="font-size: 16px;">pending</span>
+</div>
+<div class="flex-1">
+<p class="text-slate-700 dark:text-slate-300 font-medium">Waiting for input...</p>
+<p class="text-slate-500 dark:text-slate-400 text-sm">Describe your desired skill in the text area above and click "Create Skill" to begin.</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+</div>
+
+</body></html>

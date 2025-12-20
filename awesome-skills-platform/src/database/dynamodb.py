@@ -2,13 +2,52 @@
 DynamoDB client and operations.
 """
 import boto3
+import logging
 from typing import Any
 from datetime import datetime
 import uuid
 from decimal import Decimal
 from botocore.exceptions import ClientError
+from functools import lru_cache
+import time
 
 from src.core.config import settings
+
+logger = logging.getLogger(__name__)
+
+# Simple TTL cache implementation
+class TTLCache:
+    """Simple TTL-based cache for database queries."""
+
+    def __init__(self, ttl_seconds: int = 60):
+        self._cache: dict[str, tuple[Any, float]] = {}
+        self._ttl = ttl_seconds
+
+    def get(self, key: str) -> Any | None:
+        """Get item from cache if not expired."""
+        if key in self._cache:
+            value, timestamp = self._cache[key]
+            if time.time() - timestamp < self._ttl:
+                logger.debug(f"Cache hit: {key}")
+                return value
+            else:
+                del self._cache[key]
+                logger.debug(f"Cache expired: {key}")
+        return None
+
+    def set(self, key: str, value: Any) -> None:
+        """Set item in cache."""
+        self._cache[key] = (value, time.time())
+        logger.debug(f"Cache set: {key}")
+
+    def invalidate(self, key: str | None = None) -> None:
+        """Invalidate cache entry or all entries."""
+        if key:
+            self._cache.pop(key, None)
+            logger.debug(f"Cache invalidated: {key}")
+        else:
+            self._cache.clear()
+            logger.debug("Cache cleared")
 
 
 def convert_to_dynamodb_format(data: dict[str, Any]) -> dict[str, Any]:
@@ -43,6 +82,12 @@ class DynamoDBClient:
         self.skills_table = self.dynamodb.Table(settings.skills_table_name)
         self.mcp_table = self.dynamodb.Table(settings.mcp_table_name)
 
+        # Initialize caches with 60-second TTL
+        self._agent_cache = TTLCache(ttl_seconds=60)
+        self._skill_cache = TTLCache(ttl_seconds=60)
+        self._mcp_cache = TTLCache(ttl_seconds=60)
+        logger.info("DynamoDB client initialized with caching enabled")
+
     # Agent operations
     def create_agent(self, agent_data: dict[str, Any]) -> dict[str, Any]:
         """Create a new agent."""
@@ -57,20 +102,36 @@ class DynamoDBClient:
         }
 
         self.agents_table.put_item(Item=item)
+        self._agent_cache.invalidate("agents:list")  # Invalidate list cache
         return item
 
     def get_agent(self, agent_id: str) -> dict[str, Any] | None:
-        """Get an agent by ID."""
+        """Get an agent by ID with caching."""
+        cache_key = f"agent:{agent_id}"
+        cached = self._agent_cache.get(cache_key)
+        if cached is not None:
+            return cached
+
         try:
             response = self.agents_table.get_item(Key={"id": agent_id})
-            return response.get("Item")
+            item = response.get("Item")
+            if item:
+                self._agent_cache.set(cache_key, item)
+            return item
         except ClientError:
             return None
 
     def list_agents(self) -> list[dict[str, Any]]:
-        """List all agents."""
+        """List all agents with caching."""
+        cache_key = "agents:list"
+        cached = self._agent_cache.get(cache_key)
+        if cached is not None:
+            return cached
+
         response = self.agents_table.scan()
-        return response.get("Items", [])
+        items = response.get("Items", [])
+        self._agent_cache.set(cache_key, items)
+        return items
 
     def update_agent(self, agent_id: str, agent_data: dict[str, Any]) -> dict[str, Any] | None:
         """Update an agent."""
@@ -91,7 +152,11 @@ class DynamoDBClient:
                 ExpressionAttributeValues=expr_attr_values,
                 ReturnValues="ALL_NEW",
             )
-            return response.get("Attributes")
+            result = response.get("Attributes")
+            # Invalidate caches
+            self._agent_cache.invalidate(f"agent:{agent_id}")
+            self._agent_cache.invalidate("agents:list")
+            return result
         except ClientError:
             return None
 
@@ -99,6 +164,9 @@ class DynamoDBClient:
         """Delete an agent."""
         try:
             self.agents_table.delete_item(Key={"id": agent_id})
+            # Invalidate caches
+            self._agent_cache.invalidate(f"agent:{agent_id}")
+            self._agent_cache.invalidate("agents:list")
             return True
         except ClientError:
             return False

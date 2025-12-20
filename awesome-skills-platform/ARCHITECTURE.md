@@ -1,8 +1,8 @@
 # Agent Platform Architecture Design Document
 
-**Version:** 2.0
-**Last Updated:** November 2025
-**Status:** Production-Ready Design
+**Version:** 3.0 (Simplified)
+**Last Updated:** December 2025
+**Status:** Production-Ready Design (No AgentCore Runtime)
 
 ---
 
@@ -24,32 +24,36 @@
 
 ## 1. Executive Summary
 
-The Agent Platform is a production-grade, serverless conversational AI system that enables users to interact with customizable AI agents powered by AWS Bedrock and Claude models. The platform leverages Amazon Bedrock AgentCore Runtime for serverless agent execution, AgentCore Memory for intelligent conversation management, and provides a sophisticated skill and tool ecosystem through Skills and Model Context Protocol (MCP) servers.
+The Agent Platform is a conversational AI system that enables users to interact with customizable AI agents powered by AWS Bedrock and Claude models. The platform uses the **Strands Agents SDK** to run agents directly in the FastAPI backend, with a simple in-memory conversation storage system. It provides a sophisticated skill and tool ecosystem through Skills and Model Context Protocol (MCP) servers.
+
+### Architecture: Simplified
+
+**Key Change**: Agents run directly in the FastAPI backend process - no AgentCore Runtime dependency. This simplifies deployment and reduces external dependencies.
 
 ### Key Capabilities
 
 - **Agent Management**: Create and configure custom agents with different models, parameters, and capabilities
-- **Serverless Agent Runtime**: Agents run on Amazon Bedrock AgentCore Runtime with automatic scaling and managed infrastructure
-- **Intelligent Memory**: AgentCore Memory service provides semantic search and event-based conversation storage
+- **Direct Agent Execution**: Agents run directly in FastAPI backend using Strands SDK
+- **In-Memory Storage**: Simple session-based conversation history (server-side memory)
 - **Dynamic Skill System**: Extensible architecture supporting both pre-built and user-generated skills
 - **MCP Integration**: First-class support for Model Context Protocol servers using Strands MCPClient
-- **Real-time Streaming**: WebSocket-based streaming for responsive conversational experiences
+- **Real-time Streaming**: SSE-based streaming for responsive conversational experiences
 - **Rich Media Support**: Handle text, images, markdown, code blocks, and structured tool outputs
 
 ### Design Principles
 
-1. **Serverless-First**: Leverage AgentCore Runtime for managed, scalable agent execution
+1. **Simplicity**: Run agents directly in backend without external runtime dependencies
 2. **Modularity**: Clean separation between frontend, API, business logic, and data layers
 3. **Extensibility**: Plugin-based architecture for Skills and MCP servers
 4. **Observability**: Comprehensive logging and monitoring of agent interactions
-5. **Security**: Input validation, sandboxed execution, and proper authentication
-6. **Performance**: Efficient streaming, semantic memory, and multi-layer caching
+5. **Security**: Input validation and proper authentication
+6. **Performance**: Efficient streaming and multi-layer caching
 
 ---
 
 ## 2. System Overview
 
-### 2.1 High-Level Architecture
+### 2.1 High-Level Architecture (Simplified)
 
 ```
 ┌─────────────────────────────────────────┐
@@ -57,84 +61,84 @@ The Agent Platform is a production-grade, serverless conversational AI system th
 │  • Chat Interface • Agent Mgmt           │
 │  • Skill Mgmt • MCP Mgmt                 │
 └────────────────┬────────────────────────┘
-                 │ HTTP/REST + WebSocket
+                 │ HTTP/REST + SSE
 ┌────────────────▼────────────────────────┐
 │  FastAPI Backend (uvicorn)               │
-│  • REST endpoints • WebSocket streaming  │
-└─────┬──────────────────┬─────────────────┘
-      │                  │
-      ▼                  ▼
-┌─────────────┐   ┌──────────────────────┐
-│  DynamoDB   │   │  AgentCore Runtime   │
-│  • agents   │   │  • Strands Agent SDK │
-│  • skills   │   │  • BedrockModel      │
-│  • mcp_cfg  │   │  • Skill Tools       │
-│  • users    │   │  • MCP Tools         │
-└─────────────┘   └──────┬───────────────┘
-      │                  │
-      │                  │
-      ▼                  ▼
-┌─────────────┐   ┌──────────────────────┐
-│  S3 Bucket  │   │  AgentCore Memory    │
-│  • Skills   │   │  • Event Storage     │
-│  • Files    │   │  • Semantic Search   │
-└─────────────┘   └──────────────────────┘
+│  • REST endpoints • SSE streaming        │
+│  • Strands Agent SDK (runs directly)     │
+│  • BedrockModel • Skill Tools • MCP      │
+│  • In-Memory Conversation Storage        │
+└─────┬───────────────────────────────────┘
+      │
+      ▼
+┌─────────────────────────────────────────┐
+│  AWS Services                            │
+│  ┌─────────────┐   ┌──────────────────┐ │
+│  │  DynamoDB   │   │  AWS Bedrock     │ │
+│  │  • agents   │   │  • Claude Models │ │
+│  │  • skills   │   │  (Sonnet, Haiku) │ │
+│  │  • mcp_cfg  │   └──────────────────┘ │
+│  └─────────────┘                         │
+│  ┌─────────────┐                         │
+│  │  S3 Bucket  │  (optional)             │
+│  │  • Skills   │                         │
+│  └─────────────┘                         │
+└─────────────────────────────────────────┘
 ```
 
-### 2.2 Data Flow Architecture
+**Key Simplifications**:
+- No AgentCore Runtime - agents run in FastAPI process
+- No AgentCore Memory - simple in-memory session storage
+- SSE instead of WebSocket for streaming
+
+### 2.2 Data Flow Architecture (Simplified)
 
 ```
 User Input (Text/Image)
         │
         ▼
 ┌───────────────────┐
-│  Frontend         │  1. User selects agent + skills/MCPs
-│  Validation       │  2. Establishes WebSocket connection
+│  Frontend         │  1. User selects agent
+│  Validation       │  2. Sends message via HTTP POST
 └───────────────────┘
         │
         ▼
 ┌───────────────────┐
-│  API Layer        │  3. Authenticates request
-│                   │  4. Validates input payload
+│  FastAPI          │  3. Validates input payload
+│  Backend          │  4. Loads agent config from DynamoDB
 └───────────────────┘
         │
         ▼
 ┌───────────────────┐
-│  Agent            │  5. Loads agent configuration from DynamoDB
-│  Orchestrator     │  6. Deploys/invokes AgentCore Runtime agent
-│                   │  7. Retrieves context from AgentCore Memory
+│  Agent Manager    │  5. Creates/retrieves Strands Agent
+│  (in-process)     │  6. Loads enabled skills and MCP tools
+│                   │  7. Gets conversation history from memory
 └───────────────────┘
         │
         ▼
 ┌───────────────────┐
-│  AgentCore        │  8. Initializes Strands Agent with:
-│  Runtime          │     - Selected model configuration
-│                   │     - Enabled skills as tools
-│                   │     - MCP server connections (MCPClient)
-│                   │  9. Processes user message
-│                   │  10. Invokes tools if needed
-│                   │  11. Generates response via Claude
+│  Strands Agent    │  8. Processes user message
+│  (BedrockModel)   │  9. Invokes tools if needed
+│                   │  10. Generates response via Claude
 └───────────────────┘
         │
         ▼
 ┌───────────────────┐
-│  AgentCore        │  12. Stores conversation turns
-│  Memory           │  13. Creates semantic embeddings
-│                   │  14. Enables future context retrieval
+│  Memory Manager   │  11. Stores user message in session
+│  (in-memory)      │  12. Stores assistant response in session
 └───────────────────┘
         │
         ▼
 ┌───────────────────┐
-│  Streaming        │  15. Streams tokens back via WebSocket
-│  Response         │  16. Includes thinking blocks (if enabled)
-│                   │  17. Includes tool use events
+│  SSE Streaming    │  13. Streams tokens back via SSE
+│  Response         │  14. Includes tool use events
 └───────────────────┘
         │
         ▼
 ┌───────────────────┐
-│  Frontend         │  18. Renders streaming response
-│  Display          │  19. Formats tool calls, code blocks
-│                   │  20. Updates conversation UI
+│  Frontend         │  15. Renders streaming response
+│  Display          │  16. Formats tool calls, code blocks
+│                   │  17. Updates conversation UI
 └───────────────────┘
 ```
 
@@ -363,304 +367,138 @@ src/api/
 
 ### 3.3 Business Logic Layer
 
-**Technology**: Strands Agents SDK + AgentCore Runtime + Custom Python Modules
+**Technology**: Strands Agents SDK + Custom Python Modules
 
 #### Core Modules
 
 ```
 src/core/
-├── agent_manager.py         # Agent lifecycle management
-├── agentcore_deployer.py    # AgentCore deployment wrapper
+├── agent_manager.py         # Agent lifecycle management (runs agents directly)
 ├── skill_manager.py         # Skill loading and validation
 ├── mcp_manager.py           # MCP server connection handling (MCPClient)
-├── memory_manager.py        # AgentCore Memory integration
-├── streaming_handler.py     # Async streaming coordinator
-└── tool_executor.py         # Tool invocation wrapper
+├── memory_manager.py        # Simple in-memory conversation storage
+└── streaming_handler.py     # SSE streaming coordinator
 ```
 
-#### Agent Manager with AgentCore Integration
+#### Agent Manager (Simplified - No AgentCore)
 
 ```python
 # src/core/agent_manager.py
 from strands import Agent
 from strands.models import BedrockModel
-from bedrock_agentcore.runtime import BedrockAgentCoreApp
-from bedrock_agentcore.memory import MemorySessionManager
-from typing import Dict, List, Optional
-import boto3
+from typing import Dict, Optional
+import logging
+
+from src.database.dynamodb import db_client
+from src.skill_tool import generate_skill_tool, SkillToolInterceptor
+from src.core.mcp_manager import mcp_manager
+from src.core.memory_manager import get_memory_manager
 
 class AgentManager:
-    """Manages agent instances and AgentCore deployments"""
+    """Manages agent lifecycle - agents run directly in FastAPI backend"""
 
-    def __init__(self, boto_session: boto3.Session, memory_id: str, region: str):
-        self.boto_session = boto_session
-        self.memory_manager = MemorySessionManager(
-            memory_id=memory_id,
-            region_name=region
-        )
-        self.agentcore_apps: Dict[str, BedrockAgentCoreApp] = {}
+    def __init__(self):
+        self._agents: dict[str, dict] = {}
+        self._models: dict[str, dict] = {}
+        self._skill_tool = None
+        self._skill_interceptor = None
 
-    def create_agentcore_app(
-        self,
-        agent_config: AgentConfig,
-        enabled_skills: List[str],
-        enabled_mcps: List[str]
-    ) -> BedrockAgentCoreApp:
-        """
-        Create AgentCore Runtime application
-
-        Args:
-            agent_config: Agent configuration (model, tokens, etc.)
-            enabled_skills: List of skill names to load
-            enabled_mcps: List of MCP server names to connect
-
-        Returns:
-            Configured BedrockAgentCoreApp instance
-        """
-        # Initialize AgentCore app
-        app = BedrockAgentCoreApp()
-
-        # Build model configuration
-        model = self._build_model(agent_config)
-
-        # Load tools
-        tools = self._load_tools(enabled_skills, enabled_mcps)
-
-        # Create agent
-        agent = Agent(
-            model=model,
-            system_prompt=agent_config.system_prompt,
-            tools=tools
-        )
-
-        # Define entrypoint handler
-        @app.entrypoint
-        async def handler(event, context):
-            user_input = event['prompt']
-            session_id = event['session_id']
-            actor_id = event['actor_id']
-
-            # Create memory session
-            session = self.memory_manager.create_memory_session(actor_id, session_id)
-
-            # Retrieve context from AgentCore Memory
-            memories = session.search_long_term_memories(
-                query=user_input,
-                namespace_prefix=f"agent/{actor_id}/{session_id}",
-                max_results=5
-            )
-
-            # Add context to prompt if relevant memories exist
-            context = ""
-            if memories:
-                context = "\n\nRelevant context from previous conversations:\n"
-                context += "\n".join([m['content'] for m in memories])
-
-            # Run agent with streaming
-            full_response = ""
-            async for chunk in agent.astream(context + user_input):
-                full_response += chunk
-                yield chunk
-
-            # Save conversation to AgentCore Memory
-            from bedrock_agentcore.memory import ConversationalMessage, MessageRole
-            session.add_turns([
-                ConversationalMessage(user_input, MessageRole.USER),
-                ConversationalMessage(full_response, MessageRole.ASSISTANT)
-            ])
-
-            return full_response
-
-        # Store app reference
-        agent_id = agent_config.id
-        self.agentcore_apps[agent_id] = app
-
-        return app
-
-    def _build_model(self, config: AgentConfig) -> BedrockModel:
-        """Construct BedrockModel from configuration"""
-        additional_fields = {}
-
-        if config.thinking_enabled:
-            additional_fields["thinking"] = {
-                "type": "enabled",
-                "budget_tokens": config.thinking_budget
-            }
-            additional_fields["anthropic_beta"] = [
-                "interleaved-thinking-2025-05-14",
-                "fine-grained-tool-streaming-2025-05-14"
-            ]
-
-        return BedrockModel(
-            model_id=config.model_id,
-            temperature=config.temperature,
-            max_tokens=config.max_tokens,
-            cache_prompt="default",
-            cache_tools="default",
-            boto_session=self.boto_session,
-            additional_request_fields=additional_fields
-        )
-
-    def _load_tools(
-        self,
-        skill_names: List[str],
-        mcp_names: List[str]
-    ) -> List:
-        """Load and combine all tools"""
-        from strands_tools import file_read, shell, editor, file_write, tavily
-        from src.skill_tool import generate_skill_tool
-        from src.ask_user_tool import ask_user
-
-        # Sync skills from S3 to local filesystem
-        self._sync_skills_from_s3(skill_names)
-
-        # Built-in tools
-        tools = [file_read, shell, editor, file_write, tavily, ask_user]
-
-        # Add skill tool (dynamically generated from /app/skills/)
-        skill_tool = generate_skill_tool()
-        if skill_tool:
-            tools.append(skill_tool)
-
-        # Add MCP tools via MCPClient
-        mcp_tools = self._load_mcp_tools(mcp_names)
-        tools.extend(mcp_tools)
-
-        return tools
-
-    def _sync_skills_from_s3(self, skill_names: List[str]) -> None:
-        """
-        Download and extract skills from S3 to AgentCore Runtime filesystem
-
-        Flow:
-        1. Query DynamoDB skills table to get S3 URIs for enabled skills
-        2. Download ZIP packages from S3 using boto3
-        3. Extract to /app/skills/{skill_name}/ directory
-        4. Validate SKILL.md exists in each skill directory
-
-        Args:
-            skill_names: List of skill IDs enabled for this agent
-        """
-        import zipfile
-        import tempfile
-        from pathlib import Path
-
-        dynamodb = self.boto_session.resource('dynamodb')
-        s3_client = self.boto_session.client('s3')
-        skills_table = dynamodb.Table('skills')
-
-        skills_dir = Path('/app/skills')
-        skills_dir.mkdir(parents=True, exist_ok=True)
-
-        for skill_id in skill_names:
-            # 1. Query DynamoDB for skill metadata
-            response = skills_table.get_item(
-                Key={'PK': f'SKILL#{skill_id}', 'SK': 'METADATA'}
-            )
-
-            if 'Item' not in response:
-                print(f"⚠️ Skill {skill_id} not found in DynamoDB")
-                continue
-
-            skill = response['Item']
-            s3_uri = skill['s3_location']  # e.g., s3://bucket/skills/skill_id.zip
-
-            # Parse S3 URI
-            bucket = s3_uri.split('/')[2]
-            key = '/'.join(s3_uri.split('/')[3:])
-
-            # 2. Download from S3
-            with tempfile.NamedTemporaryFile(suffix='.zip', delete=False) as tmp_file:
-                print(f"📥 Downloading {skill_id} from {s3_uri}")
-                s3_client.download_file(bucket, key, tmp_file.name)
-
-                # 3. Extract to /app/skills/{skill_name}/
-                skill_path = skills_dir / skill['skill_name']
-                skill_path.mkdir(exist_ok=True)
-
-                with zipfile.ZipFile(tmp_file.name, 'r') as zip_ref:
-                    zip_ref.extractall(skill_path)
-
-                print(f"✅ Extracted {skill_id} to {skill_path}")
-
-            # 4. Validate SKILL.md exists
-            skill_md = skill_path / 'SKILL.md'
-            if not skill_md.exists():
-                print(f"❌ SKILL.md not found in {skill_path}")
-                continue
-
-            print(f"✅ Skill {skill_id} ready at {skill_path}")
-
-    def _load_mcp_tools(self, mcp_names: List[str]) -> List:
-        """Load MCP tools using Strands MCPClient"""
-        from strands.tools.mcp import MCPClient
-
-        tools = []
-        for mcp_name in mcp_names:
-            # Get MCP config from database
-            mcp_config = self._get_mcp_config(mcp_name)
-
-            # Create MCPClient
-            if mcp_config['connection_type'] == 'stdio':
-                client = MCPClient.from_stdio_server(
-                    command=mcp_config['config']['command'],
-                    args=mcp_config['config'].get('args', [])
-                )
-            elif mcp_config['connection_type'] == 'sse':
-                client = MCPClient.from_sse_server(
-                    url=mcp_config['config']['url']
-                )
-            else:  # http
-                client = MCPClient.from_streamable_http_server(
-                    url=mcp_config['config']['url']
-                )
-
-            # Get tools from MCP server
-            mcp_tools_list = client.list_tools_sync()
-
-            # Apply filters if configured
-            allowed = mcp_config.get('allowed_tools')
-            rejected = mcp_config.get('rejected_tools')
-
-            if allowed:
-                mcp_tools_list = [t for t in mcp_tools_list if t.name in allowed]
-            if rejected:
-                mcp_tools_list = [t for t in mcp_tools_list if t.name not in rejected]
-
-            tools.extend(mcp_tools_list)
-
-        return tools
-
-    async def deploy_to_agentcore(
+    def get_or_create_agent(
         self,
         agent_id: str,
-        app: BedrockAgentCoreApp
-    ) -> Dict[str, str]:
-        """
-        Deploy agent to AgentCore Runtime
+        session_id: Optional[str] = None,
+    ) -> Agent:
+        """Get cached agent or create new one from DynamoDB config"""
+        cache_key = f"{agent_id}:{session_id}" if session_id else agent_id
 
-        Uses: agentcore launch command
+        if cache_key in self._agents:
+            return self._agents[cache_key]["agent"]
 
-        Returns:
-            Deployment information including AgentCore ARN
-        """
-        # In production, this would invoke the CLI programmatically
-        # or use AWS SDK to interact with AgentCore API
+        # Load config from DynamoDB
+        agent_config = db_client.get_agent(agent_id)
+        if not agent_config:
+            raise ValueError(f"Agent {agent_id} not found")
 
-        # Example deployment command:
-        # agentcore launch --agent-id {agent_id} --region us-west-2
+        agent = self._create_agent_from_config(agent_config)
+        model_id = agent_config.get("modelId")
+        self._agents[cache_key] = {"agent": agent, "model_id": model_id}
 
-        return {
-            "status": "deployed",
-            "agent_id": agent_id,
-            "agentcore_arn": f"arn:aws:bedrock:us-west-2:account:agent/{agent_id}",
-            "endpoint": f"https://agentcore.bedrock.us-west-2.amazonaws.com/agents/{agent_id}"
-        }
+        return agent
 
-    def _get_mcp_config(self, mcp_name: str) -> Dict:
-        """Retrieve MCP configuration from DynamoDB"""
-        # Implementation depends on DynamoDB integration
-        pass
+    def _create_agent_from_config(self, config: dict) -> Agent:
+        """Create Strands Agent from configuration"""
+        model_id = config.get("modelId")
+        model, _ = self._get_or_create_model(model_id, config)
+
+        system_prompt = config.get("systemPrompt")
+        skill_ids = config.get("skillIds", [])
+        mcp_ids = config.get("mcpIds", [])
+
+        tools = []
+        hooks = []
+
+        # Load skills if enabled
+        if skill_ids:
+            skill_tool = self._get_or_create_skill_tool()
+            if skill_tool:
+                tools.append(skill_tool)
+                if self._skill_interceptor:
+                    hooks.append(self._skill_interceptor)
+
+        # Load MCP clients if enabled
+        for mcp_id in mcp_ids:
+            mcp_client = mcp_manager.get_mcp_client(mcp_id)
+            if mcp_client:
+                tools.append(mcp_client)
+
+        # Create agent (runs in-process, no AgentCore Runtime)
+        agent = Agent(
+            model=model,
+            system_prompt=system_prompt or "You are a helpful AI assistant.",
+            tools=tools if tools else None,
+            hooks=hooks if hooks else None,
+        )
+
+        return agent
+
+    def _get_or_create_model(self, model_id: str, config: dict) -> tuple:
+        """Create BedrockModel instance"""
+        if model_id in self._models:
+            return self._models[model_id]["model"], model_id
+
+        temperature = float(config.get("temperature", 0.7))
+        max_tokens = int(config.get("maxTokens", 4096))
+
+        model = BedrockModel(
+            model_id=model_id,
+            temperature=temperature,
+            max_tokens=max_tokens,
+            cache_prompt="default",
+        )
+
+        self._models[model_id] = {"model": model, "model_id": model_id}
+        return model, model_id
+
+    async def run_async(self, agent_id: str, user_message: str, session_id: Optional[str] = None) -> dict:
+        """Run conversation with agent"""
+        agent = self.get_or_create_agent(agent_id, session_id)
+
+        # Track conversation in memory
+        memory_manager = get_memory_manager()
+        session = None
+        if session_id:
+            session = memory_manager.get_or_create_session(session_id, agent_id)
+            session.add_message("user", user_message)
+
+        # Run agent
+        result = await agent.invoke_async(user_message)
+        response_text = self._extract_response_text(result)
+
+        # Save response
+        if session:
+            session.add_message("assistant", response_text)
+
+        return {"message": response_text}
 ```
 
 #### MCP Manager with Strands MCPClient
@@ -757,59 +595,66 @@ class MCPManager:
             return {"status": "error", "error": str(e)}
 ```
 
-#### Memory Manager
+#### Memory Manager (Simplified - In-Memory Storage)
 
 ```python
 # src/core/memory_manager.py
-from bedrock_agentcore.memory import MemorySessionManager, ConversationalMessage, MessageRole
-from typing import List, Dict, Optional
+from typing import Optional
+from dataclasses import dataclass, field
+from datetime import datetime
+
+@dataclass
+class ConversationMessage:
+    """A single message in a conversation."""
+    role: str  # "user" or "assistant"
+    content: str
+    timestamp: datetime = field(default_factory=datetime.now)
+
+@dataclass
+class ConversationSession:
+    """A conversation session with message history."""
+    session_id: str
+    agent_id: str
+    messages: list[ConversationMessage] = field(default_factory=list)
+
+    def add_message(self, role: str, content: str):
+        self.messages.append(ConversationMessage(role=role, content=content))
+
+    def get_history(self) -> list[dict]:
+        return [{"role": m.role, "content": m.content} for m in self.messages]
 
 class MemoryManager:
-    """Manages AgentCore Memory sessions and retrieval"""
+    """Simple in-memory conversation storage (no external dependencies)"""
 
-    def __init__(self, memory_id: str, region: str):
-        self.memory_manager = MemorySessionManager(
-            memory_id=memory_id,
-            region_name=region
-        )
+    def __init__(self):
+        self._sessions: dict[str, ConversationSession] = {}
+        self.enabled = True
 
-    def create_session(self, actor_id: str, session_id: str):
-        """Create or retrieve memory session"""
-        return self.memory_manager.create_memory_session(actor_id, session_id)
+    def get_or_create_session(self, session_id: str, agent_id: str = "default") -> ConversationSession:
+        if session_id not in self._sessions:
+            self._sessions[session_id] = ConversationSession(session_id=session_id, agent_id=agent_id)
+        return self._sessions[session_id]
 
-    async def save_conversation(
-        self,
-        actor_id: str,
-        session_id: str,
-        user_message: str,
-        assistant_message: str
-    ):
-        """Save conversation turn to AgentCore Memory"""
-        session = self.memory_manager.create_memory_session(actor_id, session_id)
+    def get_session(self, session_id: str) -> Optional[ConversationSession]:
+        return self._sessions.get(session_id)
 
-        session.add_turns([
-            ConversationalMessage(user_message, MessageRole.USER),
-            ConversationalMessage(assistant_message, MessageRole.ASSISTANT)
-        ])
+    def delete_session(self, session_id: str) -> bool:
+        if session_id in self._sessions:
+            del self._sessions[session_id]
+            return True
+        return False
 
-    async def search_memories(
-        self,
-        actor_id: str,
-        session_id: str,
-        query: str,
-        max_results: int = 5
-    ) -> List[Dict]:
-        """Search AgentCore Memory using semantic search"""
-        session = self.memory_manager.create_memory_session(actor_id, session_id)
+# Global instance
+_memory_manager: Optional[MemoryManager] = None
 
-        memories = session.search_long_term_memories(
-            query=query,
-            namespace_prefix=f"agent/{actor_id}/{session_id}",
-            max_results=max_results
-        )
-
-        return memories
+def get_memory_manager() -> MemoryManager:
+    global _memory_manager
+    if _memory_manager is None:
+        _memory_manager = MemoryManager()
+    return _memory_manager
 ```
+
+**Note**: Conversations are stored in memory and lost on server restart. For production persistence, consider adding DynamoDB or Redis storage.
 
 ---
 
@@ -1490,12 +1335,12 @@ Response: 200 OK
 | Component | Technology | Justification |
 |-----------|-----------|---------------|
 | Framework | FastAPI | Async support, auto-generated docs |
-| ASGI Server | Uvicorn | High performance, WebSocket support |
+| ASGI Server | Uvicorn | High performance, SSE support |
 | Agent SDK | Strands Agents | Native AWS Bedrock integration |
-| Agent Runtime | Amazon Bedrock AgentCore | Serverless, managed, scalable |
-| Memory | AgentCore Memory | Semantic search, event storage |
+| Agent Runtime | In-process (FastAPI) | Simplified, no external dependencies |
+| Memory | In-memory dict | Simple session storage |
 | Database | DynamoDB | Serverless, scalable, single-digit ms latency |
-| Storage | AWS S3 | Scalable object storage |
+| Storage | AWS S3 | Scalable object storage (optional) |
 | Validation | Pydantic v2 | FastAPI native, runtime validation |
 
 ### AI/ML Services
@@ -1503,10 +1348,10 @@ Response: 200 OK
 | Component | Service | Models |
 |-----------|---------|--------|
 | LLM Provider | AWS Bedrock | Claude Sonnet 4.5, Haiku 4.5 |
-| Agent Runtime | AgentCore Runtime | Serverless agent execution |
-| Memory | AgentCore Memory | Conversation context, semantic search |
+| Agent Execution | Strands Agent SDK | Runs in FastAPI process |
+| Memory | In-memory storage | Session-based conversation history |
 | MCP Client | Strands MCPClient | stdio, SSE, HTTP connections |
-| Search | Tavily API | Web search capabilities |
+| Search | Tavily API | Web search capabilities (optional) |
 
 ### Infrastructure
 
@@ -1514,16 +1359,15 @@ Response: 200 OK
 |-----------|-----------|---------|
 | Containerization | Docker | Consistent environments |
 | Backend Orchestration | ECS Fargate | Serverless containers for FastAPI |
-| Agent Runtime | AgentCore Runtime | Serverless agent execution |
 | Load Balancer | ALB | Traffic distribution and frontend/backend routing |
 | Secrets | AWS Secrets Manager | Secure credential storage |
-| Monitoring | CloudWatch + AgentCore Observability | Logs, metrics, traces |
+| Monitoring | CloudWatch | Logs, metrics, traces |
 
 ---
 
 ## 8. Deployment Architecture
 
-### 8.1 AWS Deployment (Production)
+### 8.1 AWS Deployment (Simplified Production)
 
 ```
 Internet
@@ -1531,45 +1375,35 @@ Internet
    ▼
 [ALB: Application Load Balancer]
    │
-   ├────────► [S3: React Static Files (Static Website Hosting)]
+   ├────────► [S3: React Static Files]
    │           • index.html
    │           • JS/CSS bundles
    │           • Assets
    │
-   ├────────────────────────► [ECS Fargate: FastAPI Backend]
-   │                           • REST API endpoints
-   │                           • WebSocket handler
-   │                           • Agent orchestration
-   │                           │
-   │                           ├─► [DynamoDB Tables]
-   │                           │    • agents
-   │                           │    • skills
-   │                           │    • mcp_servers
-   │                           │    • users
-   │                           │
-   │                           ├─► [S3 Bucket]
-   │                           │    • Skill ZIP packages
-   │                           │    • Uploaded files
-   │                           │    • Backups
-   │
-   └────────────────────────► [AgentCore Runtime]
-                               • Serverless agent execution
-                               • Automatic scaling
-                               • Managed by AWS
-                               │
-                               ├─► [Bedrock: Claude Models]
-                               │    • Sonnet 4.5
-                               │    • Haiku 4.5
-                               │
-                               ├─► [AgentCore Memory]
-                               │    • Event storage
-                               │    • Semantic search
-                               │    • Long-term context
-                               │
-                               └─► [MCP Servers]
-                                    • External tools
-                                    • API integrations
+   └────────► [ECS Fargate: FastAPI Backend]
+               • REST API endpoints
+               • SSE streaming
+               • Strands Agent (runs in-process)
+               • In-memory conversation storage
+               │
+               ├─► [DynamoDB Tables]
+               │    • agents
+               │    • skills
+               │    • mcp_servers
+               │
+               ├─► [AWS Bedrock]
+               │    • Claude Sonnet 4.5
+               │    • Claude Haiku 4.5
+               │
+               └─► [MCP Servers] (optional)
+                    • External tools
+                    • API integrations
 ```
+
+**Key Simplifications**:
+- No AgentCore Runtime - agents run directly in ECS Fargate containers
+- No AgentCore Memory - conversations stored in-memory (or add DynamoDB for persistence)
+- SSE streaming instead of WebSocket
 
 ### 8.2 Component Deployment Details
 
@@ -1581,38 +1415,25 @@ Internet
 
 **Backend API (ECS Fargate)**:
 - FastAPI application in Docker container
+- **Agents run directly in-process** (no external runtime)
 - Auto-scaling based on CPU/memory
 - ALB for load distribution
 - VPC with private subnets for security
 - Security groups for controlled access
 
-**AgentCore Runtime (Serverless)**:
-- Each agent configuration is deployed as an independent AgentCore Runtime instance
-- Deploy using `agentcore launch` CLI with agent-specific configuration
-- FastAPI backend acts as API gateway, invoking AgentCore Runtime via HTTP/HTTPS
-- Automatic scaling based on demand (managed by AWS)
-- No infrastructure management required
-- Integrated with Bedrock models
-- Built-in observability and monitoring
-
-**Deployment Model**:
+**Deployment Model (Simplified)**:
 1. User creates agent configuration via UI → saved to DynamoDB
-2. Backend triggers `agentcore launch` to deploy agent code to AgentCore Runtime
-3. AgentCore Runtime endpoint stored in DynamoDB (`agentcore_arn` field)
-4. User messages → FastAPI → HTTP call to AgentCore Runtime endpoint → streaming response
-5. AgentCore Runtime handles: skill loading from S3, MCP connections, memory integration
+2. User sends message → FastAPI loads agent config and creates Strands Agent in-process
+3. Strands Agent invokes Bedrock Claude models directly
+4. Response streamed back via SSE
 
-**AgentCore Memory**:
-- Managed service for conversation storage
-- Automatic semantic embeddings
-- Event-based storage with timestamps
-- Configurable retention policies
-- Cross-session semantic search
+**Conversation Storage**:
+- In-memory storage (default) - conversations lost on restart
+- For persistence: add DynamoDB or Redis storage in MemoryManager
 
 **Data Layer**:
 - DynamoDB tables with on-demand capacity
-- S3 buckets with versioning enabled
-- Automated backups and snapshots
+- S3 buckets for skill storage (optional)
 
 ### 8.3 Deployment Steps
 
@@ -2543,28 +2364,27 @@ agentcore invoke \
 
 ## Conclusion
 
-This production-ready architecture leverages Amazon Bedrock AgentCore Runtime and AgentCore Memory to provide a scalable, serverless, and intelligent agent platform. Key architectural decisions include:
+This simplified architecture provides a practical AI agent platform using the Strands Agents SDK with agents running directly in the FastAPI backend. Key architectural decisions include:
 
-1. **Serverless-First Design**: AgentCore Runtime eliminates infrastructure management while providing automatic scaling and built-in observability
-2. **Intelligent Memory**: AgentCore Memory enables semantic search and long-term context retention without managing vector databases
+1. **Simplified Design**: Agents run in-process, eliminating external runtime dependencies
+2. **In-Memory Storage**: Simple session-based conversation storage (with optional DynamoDB persistence)
 3. **Scalable Data Layer**: DynamoDB provides single-digit millisecond latency with automatic scaling
 4. **Flexible Tool Integration**: Strands MCPClient enables seamless integration with external tools via MCP protocol
-5. **Modern Frontend**: React-based UI with Tailwind CSS matches the provided design specifications exactly
-6. **Security & Compliance**: Comprehensive authentication, encryption, and isolation strategies
-7. **Cost Optimization**: Serverless components and intelligent caching minimize operational costs
+5. **Modern Frontend**: React-based UI with Tailwind CSS and SSE streaming
+6. **Cost Optimization**: No additional AWS services for agent runtime
 
-The architecture balances sophistication with pragmatism, leveraging managed AWS services while remaining flexible for future enhancements. By building on AgentCore Runtime, the platform achieves enterprise-grade reliability and scalability without the operational burden of managing Kubernetes, containers, or compute instances.
+**Trade-offs**:
+- Conversations are lost on server restart (unless DynamoDB persistence is added)
+- No automatic agent scaling beyond ECS auto-scaling
+- No semantic search across conversations (would require vector database)
 
 **Next Steps**:
 1. Review and approve architecture design
-2. Set up AWS infrastructure using Terraform
-3. Implement core backend services (FastAPI + DynamoDB)
-4. Build frontend modules based on UI design specifications
-5. Deploy initial agents to AgentCore Runtime
-6. Configure AgentCore Memory with production settings
-7. Set up monitoring and observability
-8. Conduct load testing and optimization
-9. Deploy to production environment
+2. Set up AWS infrastructure (ECS, DynamoDB, S3)
+3. Deploy FastAPI backend with Strands Agents
+4. Build and deploy React frontend
+5. Set up monitoring with CloudWatch
+6. Optional: Add DynamoDB persistence for conversation history
 
 ---
 
@@ -2573,7 +2393,8 @@ The architecture balances sophistication with pragmatism, leveraging managed AWS
 | Version | Date | Author | Changes |
 |---------|------|--------|---------|
 | 1.0 | 2025-11-01 | Architecture Team | Initial design document |
-| 2.0 | 2025-11-01 | Architecture Team | Updated with AgentCore Runtime, AgentCore Memory, DynamoDB, and actual UI design references |
+| 2.0 | 2025-11-01 | Architecture Team | Updated with AgentCore Runtime, AgentCore Memory, DynamoDB |
+| 3.0 | 2025-12-15 | Architecture Team | **Simplified**: Removed AgentCore Runtime/Memory, agents run in-process |
 
 **Review & Approval**
 

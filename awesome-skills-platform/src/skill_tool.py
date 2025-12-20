@@ -49,7 +49,7 @@ template = \
 </skill>"""
 
 ROOT=os.path.dirname(__file__)
-SKILLS_ROOT = os.path.join(ROOT , "skills")
+SKILLS_ROOT = os.path.join(ROOT , "agentcore_runtime", "skills")
 
 
 

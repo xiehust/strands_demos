@@ -1,0 +1,14 @@
+"""API routers for Agent Platform."""
+from .agents import router as agents_router
+from .skills import router as skills_router
+from .mcp import router as mcp_router
+from .chat import router as chat_router
+from .auth import router as auth_router
+
+__all__ = [
+    "agents_router",
+    "skills_router",
+    "mcp_router",
+    "chat_router",
+    "auth_router",
+]

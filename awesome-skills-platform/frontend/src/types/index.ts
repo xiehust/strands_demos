@@ -70,6 +70,13 @@ export interface Conversation {
 }
 
 // Chat API types
+export interface ChatMessage {
+  role: 'user' | 'assistant' | 'system';
+  content: string;
+  thinking?: string[];
+  timestamp?: string;
+}
+
 export interface ChatRequest {
   agentId: string;
   message: string;

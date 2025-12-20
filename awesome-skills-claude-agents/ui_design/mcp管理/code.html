@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Agent Platform - MCP Management</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300..700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet"/>
+<script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#2b6cee",
+                        "background-light": "#f6f6f8",
+                        "background-dark": "#101622",
+                    },
+                    fontFamily: {
+                        "display": ["Space Grotesk", "sans-serif"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark font-display text-gray-800 dark:text-gray-200">
+<div class="flex h-screen w-full">
+<!-- SideNavBar -->
+<aside class="flex w-64 flex-col border-r border-gray-200 dark:border-gray-800 bg-white dark:bg-[#111318] p-4">
+<div class="flex flex-col gap-4">
+<div class="flex items-center gap-3 px-3">
+<div class="bg-center bg-no-repeat aspect-square bg-cover rounded-full size-10" data-alt="Abstract blue and purple circular logo" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuCsGtGgPEb-7GqggdljyrQ5NgrsWfSn1dfKDBCfgRLCZ6vGoS9jM-ilGjuABO3n1-Zn4JFcgH8dRZivwmK7cep7xBQ6pBOnim2pczeBLK3NFip4YcygFbldC75_vJjDGyel8Utv38PboThwUfKLAnU1j8PIpDc7OBfTyCYCjlFt1E53FZd54WbVXdcB8iUtqNkHeYJANS2kKHR-8WEXyCKCjwmNX1u1nyywMPXw6ZaG9GBI_tam2teG-k6imBntZzGOeIybOgpHkHub");'></div>
+<div class="flex flex-col">
+<h1 class="text-gray-900 dark:text-white text-base font-medium leading-normal">Agent Platform</h1>
+<p class="text-gray-500 dark:text-[#9da6b9] text-sm font-normal leading-normal">Control Panel</p>
+</div>
+</div>
+<nav class="flex flex-col gap-2 mt-4">
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800" href="#">
+<span class="material-symbols-outlined text-gray-600 dark:text-white">dashboard</span>
+<p class="text-gray-900 dark:text-white text-sm font-medium leading-normal">Dashboard</p>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg bg-primary/10 dark:bg-[#282e39]" href="#">
+<span class="material-symbols-outlined text-primary dark:text-white" style="font-variation-settings: 'FILL' 1;">dns</span>
+<p class="text-primary dark:text-white text-sm font-medium leading-normal">MCP Management</p>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800" href="#">
+<span class="material-symbols-outlined text-gray-600 dark:text-white">memory</span>
+<p class="text-gray-900 dark:text-white text-sm font-medium leading-normal">Agents</p>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800" href="#">
+<span class="material-symbols-outlined text-gray-600 dark:text-white">settings</span>
+<p class="text-gray-900 dark:text-white text-sm font-medium leading-normal">Settings</p>
+</a>
+</nav>
+</div>
+<div class="mt-auto flex flex-col gap-4">
+<button class="flex w-full cursor-pointer items-center justify-center overflow-hidden rounded-lg h-10 px-4 bg-primary text-white text-sm font-bold leading-normal tracking-[0.015em] hover:bg-primary/90">
+<span class="truncate">New Agent</span>
+</button>
+<div class="flex flex-col gap-1">
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800" href="#">
+<span class="material-symbols-outlined text-gray-600 dark:text-white">help_outline</span>
+<p class="text-gray-900 dark:text-white text-sm font-medium leading-normal">Support</p>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800" href="#">
+<span class="material-symbols-outlined text-gray-600 dark:text-white">description</span>
+<p class="text-gray-900 dark:text-white text-sm font-medium leading-normal">Docs</p>
+</a>
+</div>
+</div>
+</aside>
+<!-- Main Content -->
+<main class="flex-1 flex-col overflow-y-auto">
+<div class="p-8">
+<!-- PageHeading -->
+<div class="flex flex-wrap justify-between items-center gap-4 mb-6">
+<div class="flex flex-col gap-1">
+<h1 class="text-gray-900 dark:text-white text-3xl font-black leading-tight tracking-[-0.033em]">MCP Server Management</h1>
+<p class="text-gray-500 dark:text-[#9da6b9] text-base font-normal leading-normal">Monitor and manage all MCP servers from this central dashboard.</p>
+</div>
+<button class="flex min-w-[84px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-10 px-4 bg-primary text-white text-sm font-bold leading-normal tracking-[0.015em] hover:bg-primary/90 gap-2">
+<span class="material-symbols-outlined text-lg">add</span>
+<span class="truncate">Add MCP Server</span>
+</button>
+</div>
+<!-- Toolbar -->
+<div class="flex justify-between gap-4 py-3 items-center border-y border-gray-200 dark:border-gray-800 mb-4">
+<div class="flex gap-2 items-center flex-1">
+<div class="relative w-full max-w-xs">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">search</span>
+<input class="w-full h-10 pl-10 pr-4 rounded-lg border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900/50 focus:ring-primary focus:border-primary text-sm" placeholder="Search servers..." type="text"/>
+</div>
+<div class="relative">
+<select class="appearance-none w-40 h-10 pl-3 pr-8 rounded-lg border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900/50 focus:ring-primary focus:border-primary text-sm">
+<option>Status: All</option>
+<option>Status: Online</option>
+<option>Status: Offline</option>
+<option>Status: Error</option>
+</select>
+<span class="material-symbols-outlined pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-gray-400">expand_more</span>
+</div>
+</div>
+</div>
+<!-- Table -->
+<div class="overflow-hidden rounded-lg border border-gray-200 dark:border-[#3b4354] bg-white dark:bg-[#111318]">
+<div class="overflow-x-auto">
+<table class="min-w-full divide-y divide-gray-200 dark:divide-[#3b4354]">
+<thead class="bg-gray-50 dark:bg-[#1c1f27]">
+<tr>
+<th class="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 dark:text-white sm:pl-6" scope="col"><input class="h-4 w-4 rounded border-gray-300 dark:border-gray-600 bg-gray-100 dark:bg-gray-700 text-primary focus:ring-primary" type="checkbox"/></th>
+<th class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-white" scope="col">Server Name</th>
+<th class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-white" scope="col">Status</th>
+<th class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-white" scope="col">Endpoint/IP</th>
+<th class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-white" scope="col">Version</th>
+<th class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-white" scope="col">Agent Count</th>
+<th class="relative py-3.5 pl-3 pr-4 sm:pr-6" scope="col"><span class="sr-only">Actions</span></th>
+</tr>
+</thead>
+<tbody class="divide-y divide-gray-200 dark:divide-[#3b4354]">
+<tr class="hover:bg-gray-50 dark:hover:bg-gray-800/50">
+<td class="whitespace-nowrap py-4 pl-4 pr-3 text-sm sm:pl-6"><input class="h-4 w-4 rounded border-gray-300 dark:border-gray-600 bg-gray-100 dark:bg-gray-700 text-primary focus:ring-primary" type="checkbox"/></td>
+<td class="whitespace-nowrap px-3 py-4 text-sm font-medium text-gray-900 dark:text-white">Production-Cluster-A</td>
+<td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500 dark:text-gray-400">
+<div class="inline-flex items-center gap-2 rounded-full bg-green-100 dark:bg-green-900/50 px-2.5 py-1 text-xs font-semibold text-green-800 dark:text-green-300">
+<span class="h-2 w-2 rounded-full bg-green-500"></span>
+                                            Online
+                                        </div>
+</td>
+<td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500 dark:text-[#9da6b9]">192.168.1.100:8080</td>
+<td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500 dark:text-[#9da6b9]">v2.1.3</td>
+<td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500 dark:text-[#9da6b9]">150 Agents</td>
+<td class="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
+<a class="text-primary hover:text-primary/80" href="#">Edit</a>
+<span class="mx-2 text-gray-300 dark:text-gray-600">|</span>
+<a class="text-red-600 dark:text-red-500 hover:text-red-500 dark:hover:text-red-400" href="#">Delete</a>
+</td>
+</tr>
+<tr class="hover:bg-gray-50 dark:hover:bg-gray-800/50">
+<td class="whitespace-nowrap py-4 pl-4 pr-3 text-sm sm:pl-6"><input class="h-4 w-4 rounded border-gray-300 dark:border-gray-600 bg-gray-100 dark:bg-gray-700 text-primary focus:ring-primary" type="checkbox"/></td>
+<td class="whitespace-nowrap px-3 py-4 text-sm font-medium text-gray-900 dark:text-white">Staging-EU-West</td>
+<td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500 dark:text-gray-400">
+<div class="inline-flex items-center gap-2 rounded-full bg-gray-100 dark:bg-gray-700 px-2.5 py-1 text-xs font-semibold text-gray-800 dark:text-gray-300">
+<span class="h-2 w-2 rounded-full bg-gray-500"></span>
+                                            Offline
+                                        </div>
+</td>
+<td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500 dark:text-[#9da6b9]">10.0.5.23:8080</td>
+<td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500 dark:text-[#9da6b9]">v2.1.1</td>
+<td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500 dark:text-[#9da6b9]">75 Agents</td>
+<td class="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
+<a class="text-primary hover:text-primary/80" href="#">Edit</a>
+<span class="mx-2 text-gray-300 dark:text-gray-600">|</span>
+<a class="text-red-600 dark:text-red-500 hover:text-red-500 dark:hover:text-red-400" href="#">Delete</a>
+</td>
+</tr>
+<tr class="hover:bg-gray-50 dark:hover:bg-gray-800/50">
+<td class="whitespace-nowrap py-4 pl-4 pr-3 text-sm sm:pl-6"><input class="h-4 w-4 rounded border-gray-300 dark:border-gray-600 bg-gray-100 dark:bg-gray-700 text-primary focus:ring-primary" type="checkbox"/></td>
+<td class="whitespace-nowrap px-3 py-4 text-sm font-medium text-gray-900 dark:text-white">Development-US-East</td>
+<td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500 dark:text-gray-400">
+<div class="inline-flex items-center gap-2 rounded-full bg-red-100 dark:bg-red-900/50 px-2.5 py-1 text-xs font-semibold text-red-800 dark:text-red-300">
+<span class="h-2 w-2 rounded-full bg-red-500"></span>
+                                            Error
+                                        </div>
+</td>
+<td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500 dark:text-[#9da6b9]">dev.mcp.internal:9000</td>
+<td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500 dark:text-[#9da6b9]">v2.2.0-beta</td>
+<td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500 dark:text-[#9da6b9]">12 Agents</td>
+<td class="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
+<a class="text-primary hover:text-primary/80" href="#">Edit</a>
+<span class="mx-2 text-gray-300 dark:text-gray-600">|</span>
+<a class="text-red-600 dark:text-red-500 hover:text-red-500 dark:hover:text-red-400" href="#">Delete</a>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<!-- EmptyState (Uncomment to view) -->
+<!-- 
+                <div class="flex flex-col items-center justify-center py-20 border border-dashed border-gray-300 dark:border-gray-700 rounded-lg mt-4">
+                    <div class="text-primary dark:text-primary/70">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-24 w-24" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="0.5">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M5 12h14M12 5l7 7-7 7" />
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 5v14" opacity="0.1"/>
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M19 12H5" opacity="0.1"/>
+                            <rect x="3" y="3" width="18" height="18" rx="2" stroke-width="0.7"/>
+                        </svg>
+                    </div>
+                    <div class="flex max-w-md flex-col items-center gap-2 mt-6">
+                        <p class="text-gray-900 dark:text-white text-lg font-bold leading-tight tracking-[-0.015em] text-center">No MCP Servers Found</p>
+                        <p class="text-gray-500 dark:text-[#9da6b9] text-sm font-normal leading-normal text-center">Get started by adding your first MCP server to begin monitoring and management.</p>
+                    </div>
+                    <button class="flex min-w-[84px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-10 px-4 bg-primary text-white text-sm font-bold leading-normal tracking-[0.015em] hover:bg-primary/90 mt-6 gap-2">
+                        <span class="material-symbols-outlined text-lg">add</span>
+                        <span class="truncate">Add MCP Server</span>
+                    </button>
+                </div>
+                -->
+</div>
+</main>
+</div>
+</body></html>
