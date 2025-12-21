@@ -214,11 +214,55 @@ The backend uses the official **Claude Agent SDK** (`claude-agent-sdk`). Key con
            # Process streaming messages
    ```
 
-2. **Built-in Tools**: Claude Code CLI provides these out-of-the-box:
+2. **ClaudeAgentOptions Reference**: Complete options for configuring agent behavior:
+   ```python
+   ClaudeAgentOptions(
+       # Core Configuration
+       system_prompt="...",           # System prompt for the agent
+       model="claude-sonnet-4-20250514",  # Claude model to use
+       permission_mode="default",     # "default", "acceptEdits", "plan", "bypassPermissions"
+
+       # Working Directory & Settings
+       cwd="/path/to/workspace",      # Working directory for Claude Code CLI
+       setting_sources=['project'], # Directory to load <Working Directory>/.claude/settings.json from
+
+       # Tools Configuration
+       allowed_tools=["Bash", "Read", "Write", "Edit", "Glob", "Grep", "WebFetch", "Skill"],
+
+       # MCP Servers (stdio, sse, http)
+       mcp_servers={
+           "server-name": {
+               "type": "stdio",        # Connection type
+               "command": "uvx",       # Command to run
+               "args": ["mcp-server-name", "arg1"]
+           }
+       },
+
+       # Hooks for security and logging
+       hooks={
+           "PreToolUse": [HookMatcher(...)],
+           "PostToolUse": [HookMatcher(...)]
+       }
+   )
+   ```
+
+   **Key Options Explained**:
+   | Option | Type | Description |
+   |--------|------|-------------|
+   | `system_prompt` | str | Instructions for the agent's behavior |
+   | `model` | str | Claude model ID (e.g., `claude-sonnet-4-20250514`, `claude-haiku-4-5-20251001`) |
+   | `permission_mode` | str | Controls tool execution permissions |
+   | `cwd` | str | Working directory for file operations and bash commands |
+   | `setting_sources` | str | Directory containing `.claude/settings.json` for skill/tool configs |
+   | `allowed_tools` | list | List of tool names the agent can use |
+   | `mcp_servers` | dict | MCP server configurations |
+   | `hooks` | dict | Pre/Post tool use hooks for security and logging |
+
+3. **Built-in Tools**: Claude Code CLI provides these out-of-the-box:
    - `Bash`, `Read`, `Write`, `Edit`, `Glob`, `Grep`, `WebFetch`, `TodoWrite`, `NotebookEdit`
    - Skills tool: `Skill` (when enabled via `enable_skills` flag)
 
-3. **MCP Configuration**: MCP servers are configured in `mcp_servers` dict:
+4. **MCP Configuration**: MCP servers are configured in `mcp_servers` dict:
    ```python
    mcp_servers = {
        "postgres": {
@@ -229,7 +273,7 @@ The backend uses the official **Claude Agent SDK** (`claude-agent-sdk`). Key con
    }
    ```
 
-4. **Hooks for Security**: Use hooks to intercept tool calls:
+5. **Hooks for Security**: Use hooks to intercept tool calls:
    ```python
    from claude_agent_sdk import HookMatcher
 
@@ -337,7 +381,6 @@ These environment variables are automatically passed to Claude Code CLI when cre
 - `POST /api/mcp` - Create MCP config
 - `PUT /api/mcp/{id}` - Update MCP config
 - `DELETE /api/mcp/{id}` - Delete MCP config
-- `POST /api/mcp/{id}/test` - Test connection
 
 ### Chat
 - `POST /api/chat/stream` - Stream chat (SSE)

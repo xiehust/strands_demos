@@ -16,9 +16,14 @@
     "@tanstack/react-query": "^5.90.5",
     "axios": "^1.13.1",
     "clsx": "^2.1.1",
+    "highlight.js": "^11.11.1",
+    "mermaid": "^11.12.2",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
-    "react-router-dom": "^7.9.5"
+    "react-markdown": "^10.1.0",
+    "react-router-dom": "^7.9.5",
+    "rehype-highlight": "^7.0.2",
+    "remark-gfm": "^4.0.1"
   },
   "devDependencies": {
     "@eslint/js": "^9.36.0",
@@ -26,6 +31,7 @@
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.0",
     "@testing-library/user-event": "^14.6.1",
+    "@types/mermaid": "^9.1.0",
     "@types/node": "^24.6.0",
     "@types/react": "^19.1.16",
     "@types/react-dom": "^19.1.9",

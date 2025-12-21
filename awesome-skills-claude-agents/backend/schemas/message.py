@@ -14,6 +14,17 @@ class ChatRequest(BaseModel):
     enable_mcp: bool = False
 
 
+class AnswerQuestionRequest(BaseModel):
+    """Request model for answering AskUserQuestion."""
+
+    agent_id: str
+    session_id: str
+    tool_use_id: str
+    answers: dict[str, str]
+    enable_skills: bool = False
+    enable_mcp: bool = False
+
+
 class TextContent(BaseModel):
     """Text content block."""
 
@@ -79,3 +90,14 @@ class ChatSessionResponse(BaseModel):
     title: str
     created_at: str
     last_accessed_at: str
+
+
+class ChatMessageResponse(BaseModel):
+    """Response model for chat message."""
+
+    id: str
+    session_id: str
+    role: str  # 'user' or 'assistant'
+    content: list[dict[str, Any]]
+    model: str | None = None
+    created_at: str

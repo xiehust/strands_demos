@@ -1,12 +1,11 @@
 """MCP Server CRUD API endpoints."""
 from fastapi import APIRouter
-from schemas.mcp import MCPCreateRequest, MCPUpdateRequest, MCPResponse, MCPTestResult
+from schemas.mcp import MCPCreateRequest, MCPUpdateRequest, MCPResponse
 from database import db
 from core.exceptions import (
     MCPServerNotFoundException,
     ValidationException,
 )
-import asyncio
 
 router = APIRouter()
 
@@ -65,10 +64,8 @@ async def create_mcp_server(request: MCPCreateRequest):
         "config": request.config,
         "allowed_tools": request.allowed_tools,
         "rejected_tools": request.rejected_tools,
-        "status": "offline",
         "endpoint": endpoint,
         "version": "v1.0.0",
-        "agent_count": 0,
     }
     server = await db.mcp_servers.put(server_data)
     return server
@@ -127,32 +124,4 @@ async def delete_mcp_server(mcp_id: str):
         raise MCPServerNotFoundException(
             detail=f"MCP server with ID '{mcp_id}' does not exist",
             suggested_action="Please check the MCP server ID and try again"
-        )
-
-
-@router.post("/{mcp_id}/test", response_model=MCPTestResult)
-async def test_mcp_connection(mcp_id: str):
-    """Test MCP server connection."""
-    server = await db.mcp_servers.get(mcp_id)
-    if not server:
-        raise MCPServerNotFoundException(
-            detail=f"MCP server with ID '{mcp_id}' does not exist",
-            suggested_action="Please check the MCP server ID and try again"
-        )
-
-    # Simulate connection test
-    await asyncio.sleep(0.5)
-
-    # In production, this would actually test the connection
-    # For demo, we'll randomly succeed/fail based on current status
-    import random
-
-    if random.random() > 0.3:
-        await db.mcp_servers.update(mcp_id, {"status": "online"})
-        return MCPTestResult(status="success", message="Connection successful")
-    else:
-        await db.mcp_servers.update(mcp_id, {"status": "error"})
-        return MCPTestResult(
-            status="error",
-            error="Connection timed out",
         )

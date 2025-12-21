@@ -17,7 +17,7 @@ class DynamoDBTable(BaseTable[T], Generic[T]):
     """DynamoDB table implementation of BaseTable interface."""
 
     def __init__(self, table_name: str, session: aioboto3.Session):
-        self.table_name = f"{settings.dynamodb_table_prefix}{table_name}"
+        self.table_name = table_name
         self._session = session
         self._resource = None
 
@@ -25,8 +25,6 @@ class DynamoDBTable(BaseTable[T], Generic[T]):
         """Get the DynamoDB table resource."""
         if self._resource is None:
             kwargs = {"region_name": settings.aws_region}
-            if settings.dynamodb_endpoint:
-                kwargs["endpoint_url"] = settings.dynamodb_endpoint
             if settings.aws_access_key_id:
                 kwargs["aws_access_key_id"] = settings.aws_access_key_id
                 kwargs["aws_secret_access_key"] = settings.aws_secret_access_key
@@ -132,6 +130,42 @@ class DynamoDBTable(BaseTable[T], Generic[T]):
             raise
 
 
+class DynamoDBMessagesTable(DynamoDBTable[T], Generic[T]):
+    """Specialized DynamoDB table for messages with session_id querying support."""
+
+    async def list_by_session(self, session_id: str) -> list[T]:
+        """List all messages for a session, ordered by timestamp."""
+        table = await self._get_table()
+
+        try:
+            # Try using GSI for session_id
+            response = await table.query(
+                IndexName="session_id-index",
+                KeyConditionExpression="session_id = :sid",
+                ExpressionAttributeValues={":sid": session_id},
+                ScanIndexForward=True  # Ascending order by sort key
+            )
+            return response.get("Items", [])
+        except ClientError:
+            # Fall back to scan with filter if GSI doesn't exist
+            response = await table.scan(
+                FilterExpression="session_id = :sid",
+                ExpressionAttributeValues={":sid": session_id}
+            )
+            # Sort by created_at
+            items = response.get("Items", [])
+            return sorted(items, key=lambda x: x.get("created_at", ""))
+
+    async def delete_by_session(self, session_id: str) -> int:
+        """Delete all messages for a session. Returns count of deleted items."""
+        messages = await self.list_by_session(session_id)
+        deleted_count = 0
+        for msg in messages:
+            if await self.delete(msg["id"]):
+                deleted_count += 1
+        return deleted_count
+
+
 class DynamoDBDatabase(BaseDatabase):
     """DynamoDB database client implementing BaseDatabase interface."""
 
@@ -141,6 +175,7 @@ class DynamoDBDatabase(BaseDatabase):
         self._skills = DynamoDBTable[dict](settings.dynamodb_skills_table, self._session)
         self._mcp_servers = DynamoDBTable[dict](settings.dynamodb_mcp_table, self._session)
         self._sessions = DynamoDBTable[dict](settings.dynamodb_sessions_table, self._session)
+        self._messages = DynamoDBMessagesTable[dict](settings.dynamodb_messages_table, self._session)
         self._users = DynamoDBTable[dict](settings.dynamodb_users_table, self._session)
 
     @property
@@ -162,6 +197,11 @@ class DynamoDBDatabase(BaseDatabase):
     def sessions(self) -> DynamoDBTable:
         """Get the sessions table."""
         return self._sessions
+
+    @property
+    def messages(self) -> DynamoDBMessagesTable:
+        """Get the messages table."""
+        return self._messages
 
     @property
     def users(self) -> DynamoDBTable:

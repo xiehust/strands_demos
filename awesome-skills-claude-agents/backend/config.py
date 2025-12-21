@@ -7,6 +7,27 @@ from functools import lru_cache
 _BACKEND_DIR = Path(__file__).resolve().parent
 _PROJECT_ROOT = _BACKEND_DIR.parent
 
+# Model ID mapping: Anthropic API model ID -> AWS Bedrock model ID
+# Used when CLAUDE_CODE_USE_BEDROCK=true
+ANTHROPIC_TO_BEDROCK_MODEL_MAP: dict[str, str] = {
+    # Claude 4.5 models
+    "claude-haiku-4-5-20251001": "global.anthropic.claude-haiku-4-5-20251001-v1:0",
+    "claude-sonnet-4-5-20250929": "global.anthropic.claude-sonnet-4-5-20250929-v1:0",
+    "claude-opus-4-5-20251101": "global.anthropic.claude-opus-4-5-20251101-v1:0",
+}
+
+
+def get_bedrock_model_id(anthropic_model_id: str) -> str:
+    """Convert Anthropic model ID to AWS Bedrock model ID.
+
+    Args:
+        anthropic_model_id: The Anthropic API model identifier
+
+    Returns:
+        The corresponding AWS Bedrock model identifier, or the original ID if no mapping exists
+    """
+    return ANTHROPIC_TO_BEDROCK_MODEL_MAP.get(anthropic_model_id, anthropic_model_id)
+
 
 class Settings(BaseSettings):
     """Application settings loaded from environment variables."""
@@ -14,7 +35,7 @@ class Settings(BaseSettings):
     # Application
     app_name: str = "Agent Platform API"
     app_version: str = "4.0.0"
-    debug: bool = True
+    debug: bool = False
 
     # Server
     host: str = "0.0.0.0"
@@ -23,22 +44,18 @@ class Settings(BaseSettings):
     # CORS
     cors_origins: list[str] = ["http://localhost:5173", "http://localhost:3000"]
 
-    # Database Mode
-    mock_db: bool = True  # Use in-memory mock (true) or DynamoDB (false)
-
     # AWS
     aws_region: str = "us-west-2"
     aws_access_key_id: str = ""
     aws_secret_access_key: str = ""
 
-    # DynamoDB
-    dynamodb_endpoint: str | None = None  # Local DynamoDB endpoint
-    dynamodb_table_prefix: str = ""  # Prefix for table names (e.g., "dev_", "prod_")
-    dynamodb_agents_table: str = "agents"
-    dynamodb_skills_table: str = "skills"
-    dynamodb_mcp_table: str = "mcp_servers"
-    dynamodb_users_table: str = "users"
-    dynamodb_sessions_table: str = "sessions"
+    # DynamoDB (tables are auto-created on first startup via start.sh)
+    dynamodb_agents_table: str = "awesome_skills_platform_agents"
+    dynamodb_skills_table: str = "awesome_skills_platform_skills"
+    dynamodb_mcp_table: str = "awesome_skills_platform_mcp_servers"
+    dynamodb_users_table: str = "awesome_skills_platform_users"
+    dynamodb_sessions_table: str = "awesome_skills_platform_sessions"
+    dynamodb_messages_table: str = "awesome_skills_platform_messages"
 
     # JWT Authentication
     jwt_secret_key: str = "your-secret-key-change-in-production"
@@ -49,8 +66,8 @@ class Settings(BaseSettings):
     # Rate Limiting
     rate_limit_per_minute: int = 100
 
-    # S3
-    s3_bucket: str = "agent-platform-skills"
+    # S3 (bucket name will auto-append AWS account ID on first startup via start.sh)
+    s3_bucket: str = "awesome-skills-platform"
 
     # Claude Agent SDK / Anthropic API Configuration
     anthropic_api_key: str = ""
@@ -58,8 +75,8 @@ class Settings(BaseSettings):
     default_model: str = "claude-sonnet-4-5-20250929"
 
     # Claude Code Configuration
-    claude_code_use_bedrock: bool = False  # Use AWS Bedrock instead of Anthropic API
-    claude_code_disable_experimental_betas: bool = False  # Disable experimental features
+    claude_code_use_bedrock: bool = True  # Use AWS Bedrock instead of Anthropic API
+    claude_code_disable_experimental_betas: bool = True  # Disable experimental features
 
     # Agent workspace directory (default: ./workspace relative to project root)
     agent_workspace_dir: str = str(_PROJECT_ROOT / "workspace")

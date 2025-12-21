@@ -5,7 +5,6 @@ export interface Agent {
   description?: string;
   model?: string;
   permissionMode: 'default' | 'acceptEdits' | 'plan' | 'bypassPermissions';
-  maxTurns?: number;
   systemPrompt?: string;
   allowedTools: string[];
   skillIds: string[];
@@ -26,10 +25,10 @@ export interface AgentCreateRequest {
   description?: string;
   model?: string;
   permissionMode?: 'default' | 'acceptEdits' | 'plan' | 'bypassPermissions';
-  maxTurns?: number;
   systemPrompt?: string;
   skillIds?: string[];
   mcpIds?: string[];
+  allowedTools?: string[];
   enableBashTool?: boolean;
   enableFileTools?: boolean;
   enableWebTools?: boolean;
@@ -55,6 +54,21 @@ export interface SkillCreateRequest {
   description: string;
 }
 
+export interface SyncError {
+  skill: string;
+  error: string;
+}
+
+export interface SyncResult {
+  added: string[];
+  updated: string[];
+  removed: string[];
+  errors: SyncError[];
+  totalLocal: number;
+  totalS3: number;
+  totalDb: number;
+}
+
 // MCP Server Types
 export interface MCPServer {
   id: string;
@@ -64,10 +78,8 @@ export interface MCPServer {
   config: Record<string, unknown>;
   allowedTools?: string[];
   rejectedTools?: string[];
-  status: 'online' | 'offline' | 'error';
   endpoint?: string;
   version?: string;
-  agentCount?: number;
   createdAt: string;
   updatedAt: string;
 }
@@ -92,6 +104,15 @@ export interface ChatSession {
   lastAccessedAt: string;
 }
 
+export interface ChatMessage {
+  id: string;
+  sessionId: string;
+  role: 'user' | 'assistant';
+  content: ContentBlock[];
+  model?: string;
+  createdAt: string;
+}
+
 export interface TextContent {
   type: 'text';
   text: string;
@@ -111,7 +132,26 @@ export interface ToolResultContent {
   isError: boolean;
 }
 
-export type ContentBlock = TextContent | ToolUseContent | ToolResultContent;
+// AskUserQuestion types
+export interface AskUserQuestionOption {
+  label: string;
+  description: string;
+}
+
+export interface AskUserQuestion {
+  question: string;
+  header: string;
+  options: AskUserQuestionOption[];
+  multiSelect: boolean;
+}
+
+export interface AskUserQuestionContent {
+  type: 'ask_user_question';
+  toolUseId: string;
+  questions: AskUserQuestion[];
+}
+
+export type ContentBlock = TextContent | ToolUseContent | ToolResultContent | AskUserQuestionContent;
 
 export interface Message {
   id: string;
@@ -130,14 +170,23 @@ export interface ChatRequest {
 }
 
 export interface StreamEvent {
-  type: 'assistant' | 'tool_use' | 'tool_result' | 'result' | 'error';
+  type: 'assistant' | 'tool_use' | 'tool_result' | 'result' | 'error' | 'ask_user_question' | 'session_start';
   content?: ContentBlock[];
   model?: string;
   sessionId?: string;
   durationMs?: number;
   totalCostUsd?: number;
   numTurns?: number;
+  skillName?: string; // For skill creation result
+  // AskUserQuestion fields
+  toolUseId?: string;
+  questions?: AskUserQuestion[];
+  // Error fields
   error?: string;
+  message?: string;
+  code?: string;
+  detail?: string;
+  suggestedAction?: string;
 }
 
 // API Response Types

@@ -51,8 +51,9 @@ class AgentCreateRequest(BaseModel):
     description: str | None = None
     model: str | None = None
     permission_mode: Literal["default", "acceptEdits", "plan", "bypassPermissions"] = "default"
-    max_turns: int | None = Field(default=4096, ge=1)
+    max_turns: int | None = Field(default=100, ge=1, le=100)
     system_prompt: str | None = None
+    allowed_tools: list[str] = Field(default_factory=list)
     skill_ids: list[str] = Field(default_factory=list)
     mcp_ids: list[str] = Field(default_factory=list)
     enable_bash_tool: bool = True
@@ -69,6 +70,7 @@ class AgentUpdateRequest(BaseModel):
     permission_mode: Literal["default", "acceptEdits", "plan", "bypassPermissions"] | None = None
     max_turns: int | None = None
     system_prompt: str | None = None
+    allowed_tools: list[str] | None = None
     skill_ids: list[str] | None = None
     mcp_ids: list[str] | None = None
     enable_bash_tool: bool | None = None

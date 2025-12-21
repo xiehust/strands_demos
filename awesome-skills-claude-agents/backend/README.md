@@ -78,7 +78,8 @@ backend/
 │   ├── agent_manager.py # Claude Agent SDK integration
 │   └── session_manager.py
 ├── database/            # Data layer
-│   └── mock_db.py       # In-memory mock database
+│   ├── base.py          # Base database interfaces
+│   └── dynamodb.py      # AWS DynamoDB implementation
 ├── schemas/             # Pydantic models
 └── pyproject.toml       # Dependencies
 ```

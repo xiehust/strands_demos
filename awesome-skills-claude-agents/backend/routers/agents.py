@@ -2,12 +2,22 @@
 from fastapi import APIRouter
 from schemas.agent import AgentCreateRequest, AgentUpdateRequest, AgentResponse
 from database import db
+from config import ANTHROPIC_TO_BEDROCK_MODEL_MAP
 from core.exceptions import (
     AgentNotFoundException,
     ValidationException,
 )
 
 router = APIRouter()
+
+
+@router.get("/models", response_model=list[str])
+async def list_available_models():
+    """List all available Claude models.
+
+    Returns the Anthropic model IDs that have Bedrock mappings configured.
+    """
+    return list(ANTHROPIC_TO_BEDROCK_MODEL_MAP.keys())
 
 
 @router.get("", response_model=list[AgentResponse])
@@ -52,7 +62,7 @@ async def create_agent(request: AgentCreateRequest):
         "permission_mode": request.permission_mode,
         "max_turns": request.max_turns,
         "system_prompt": request.system_prompt,
-        "allowed_tools": [],
+        "allowed_tools": request.allowed_tools,
         "skill_ids": request.skill_ids,
         "mcp_ids": request.mcp_ids,
         "working_directory": None,  # Use default from settings.agent_workspace_dir

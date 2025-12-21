@@ -44,10 +44,15 @@ if [ ! -f "backend/.env" ]; then
     fi
 fi
 
-# Create PID directory
-mkdir -p .pids
+# Initialize AWS resources (DynamoDB tables, S3 bucket)
+source "$SCRIPT_DIR/init-aws.sh"
+init_aws_resources
+
+# Create directories
+mkdir -p .pids logs
 
 # Start backend
+echo ""
 echo "🔧 Starting backend (FastAPI)..."
 cd backend
 source .venv/bin/activate

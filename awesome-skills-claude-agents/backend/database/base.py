@@ -65,6 +65,12 @@ class BaseDatabase(ABC):
 
     @property
     @abstractmethod
+    def messages(self) -> BaseTable:
+        """Get the messages table."""
+        pass
+
+    @property
+    @abstractmethod
     def users(self) -> BaseTable:
         """Get the users table."""
         pass

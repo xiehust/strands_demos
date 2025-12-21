@@ -1,89 +1,53 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import clsx from 'clsx';
-import { SearchBar, StatusBadge, Button, Modal, MultiSelect, SkeletonTable, Spinner } from '../components/common';
-import type { Agent, Skill, MCPServer } from '../types';
+import { SearchBar, StatusBadge, Button, Modal, MultiSelect, SkeletonTable, Spinner, ToolSelector, getDefaultEnabledTools, ResizableTable, ResizableTableCell, ConfirmDialog } from '../components/common';
+import type { Agent, AgentCreateRequest, Skill, MCPServer } from '../types';
+import { agentsService } from '../services/agents';
 import { skillsService } from '../services/skills';
 import { mcpService } from '../services/mcp';
 import { useLoadingState } from '../hooks/useLoadingState';
 
-// Mock data for demo
-const mockAgents: Agent[] = [
-  {
-    id: '1',
-    name: 'Customer Service Bot',
-    description: 'Handles customer inquiries and support tickets',
-    model: 'GPT-4o',
-    permissionMode: 'default',
-    maxTurns: 4096,
-    systemPrompt: 'You are a helpful customer service agent.',
-    allowedTools: ['Read', 'Write'],
-    skillIds: ['knowledge-base-search', 'sentiment-analysis'],
-    mcpIds: ['profanity-filter'],
-    workingDirectory: '/workspace',
-    enableBashTool: false,
-    enableFileTools: true,
-    enableWebTools: false,
-    enableToolLogging: true,
-    enableSafetyChecks: true,
-    status: 'active',
-    createdAt: '2025-01-01',
-    updatedAt: '2025-01-01',
-  },
-  {
-    id: '2',
-    name: 'Data Analysis Agent',
-    description: 'Analyzes data and generates reports',
-    model: 'Claude 3 Opus',
-    permissionMode: 'acceptEdits',
-    maxTurns: 8192,
-    systemPrompt: 'You are a data analysis expert.',
-    allowedTools: ['Read', 'Write', 'Bash'],
-    skillIds: ['api-integration'],
-    mcpIds: [],
-    workingDirectory: '/workspace',
-    enableBashTool: true,
-    enableFileTools: true,
-    enableWebTools: true,
-    enableToolLogging: true,
-    enableSafetyChecks: true,
-    status: 'inactive',
-    createdAt: '2025-01-01',
-    updatedAt: '2025-01-01',
-  },
-  {
-    id: '3',
-    name: 'Content Generation Agent',
-    description: 'Creates and edits content',
-    model: 'GPT-4',
-    permissionMode: 'default',
-    maxTurns: 2048,
-    systemPrompt: 'You are a creative content writer.',
-    allowedTools: ['Read', 'Write'],
-    skillIds: [],
-    mcpIds: [],
-    workingDirectory: '/workspace',
-    enableBashTool: false,
-    enableFileTools: true,
-    enableWebTools: false,
-    enableToolLogging: true,
-    enableSafetyChecks: true,
-    status: 'active',
-    createdAt: '2025-01-01',
-    updatedAt: '2025-01-01',
-  },
+// Agent table column configuration
+const AGENT_COLUMNS = [
+  { key: 'name', header: 'Agent Name', initialWidth: 180, minWidth: 120 },
+  { key: 'status', header: 'Status', initialWidth: 100, minWidth: 80 },
+  { key: 'model', header: 'Base Model', initialWidth: 200, minWidth: 150 },
+  { key: 'skills', header: 'Enabled Skills', initialWidth: 200, minWidth: 120 },
+  { key: 'mcps', header: 'Enabled MCPs', initialWidth: 200, minWidth: 120 },
+  { key: 'actions', header: 'Actions', initialWidth: 140, minWidth: 100, align: 'right' as const },
 ];
 
-const models = ['GPT-4o', 'GPT-4', 'Claude 3 Opus', 'Claude 3.5 Sonnet', 'Claude Sonnet 4'];
-
 export default function AgentsPage() {
-  const [agents, setAgents] = useState(mockAgents);
+  const navigate = useNavigate();
+  const [agents, setAgents] = useState<Agent[]>([]);
+  const [models, setModels] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedAgent, setSelectedAgent] = useState<Agent | null>(mockAgents[0]);
+  const [selectedAgent, setSelectedAgent] = useState<Agent | null>(null);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-  const [isInitialLoading] = useState(false);
+  const [isInitialLoading, setIsInitialLoading] = useState(true);
 
   // Loading states for save operations
   const saveState = useLoadingState();
+
+  // Fetch agents and models on mount
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [agentsData, modelsData] = await Promise.all([
+          agentsService.list(),
+          agentsService.listModels(),
+        ]);
+        setAgents(agentsData);
+        setModels(modelsData);
+      } catch (error) {
+        console.error('Failed to fetch data:', error);
+      } finally {
+        setIsInitialLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
 
   // Skills and MCPs state
   const [skills, setSkills] = useState<Skill[]>([]);
@@ -123,6 +87,29 @@ export default function AgentsPage() {
     }
   };
 
+  // Fetch skills and MCPs on mount for table display
+  useEffect(() => {
+    fetchSkills();
+    fetchMCPs();
+  }, []);
+
+  // Helper functions to get names from IDs
+  const getSkillNames = (skillIds: string[]) => {
+    if (!skillIds || skillIds.length === 0) return '-';
+    const names = skillIds
+      .map((id) => skills.find((s) => s.id === id)?.name)
+      .filter(Boolean);
+    return names.length > 0 ? names.join(', ') : '-';
+  };
+
+  const getMcpNames = (mcpIds: string[]) => {
+    if (!mcpIds || mcpIds.length === 0) return '-';
+    const names = mcpIds
+      .map((id) => mcpServers.find((m) => m.id === id)?.name)
+      .filter(Boolean);
+    return names.length > 0 ? names.join(', ') : '-';
+  };
+
   const filteredAgents = agents.filter(
     (agent) =>
       agent.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -133,12 +120,51 @@ export default function AgentsPage() {
     if (!selectedAgent) return;
 
     await saveState.execute(async () => {
-      // Simulate API call delay
-      await new Promise(resolve => setTimeout(resolve, 500));
+      const updated = await agentsService.update(selectedAgent.id, selectedAgent);
       setAgents((prev) =>
-        prev.map((agent) => (agent.id === selectedAgent.id ? selectedAgent : agent))
+        prev.map((agent) => (agent.id === updated.id ? updated : agent))
       );
+      setSelectedAgent(updated);
     });
+  };
+
+  // Delete confirmation state
+  const [deleteTarget, setDeleteTarget] = useState<Agent | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  const handleDeleteClick = (agent: Agent) => {
+    setDeleteTarget(agent);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!deleteTarget) return;
+    setIsDeleting(true);
+    try {
+      await agentsService.delete(deleteTarget.id);
+      setAgents((prev) => prev.filter((a) => a.id !== deleteTarget.id));
+      if (selectedAgent?.id === deleteTarget.id) {
+        setSelectedAgent(null);
+      }
+      setDeleteTarget(null);
+    } catch (error) {
+      console.error('Failed to delete agent:', error);
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  const handleStartChat = (agentId: string) => {
+    navigate(`/chat?agentId=${agentId}`);
+  };
+
+  const handleCreateAgent = async (data: AgentCreateRequest) => {
+    try {
+      const created = await agentsService.create(data);
+      setAgents((prev) => [...prev, created]);
+      setIsCreateModalOpen(false);
+    } catch (error) {
+      console.error('Failed to create agent:', error);
+    }
   };
 
   return (
@@ -166,62 +192,82 @@ export default function AgentsPage() {
 
           <div className="bg-dark-card border border-dark-border rounded-xl overflow-hidden">
             {isInitialLoading ? (
-              <SkeletonTable rows={5} columns={5} />
+              <SkeletonTable rows={5} columns={6} />
             ) : (
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b border-dark-border">
-                    <th className="px-6 py-4 text-left text-sm font-medium text-muted">Agent Name</th>
-                    <th className="px-6 py-4 text-left text-sm font-medium text-muted">Status</th>
-                    <th className="px-6 py-4 text-left text-sm font-medium text-muted">Base Model</th>
-                    <th className="px-6 py-4 text-left text-sm font-medium text-muted">Max Tokens</th>
-                    <th className="px-6 py-4 text-left text-sm font-medium text-muted">Actions</th>
+              <ResizableTable columns={AGENT_COLUMNS}>
+                {filteredAgents.map((agent) => (
+                  <tr
+                    key={agent.id}
+                    className={clsx(
+                      'border-b border-dark-border hover:bg-dark-hover transition-colors cursor-pointer',
+                      selectedAgent?.id === agent.id && 'bg-dark-hover'
+                    )}
+                    onClick={() => setSelectedAgent(agent)}
+                  >
+                    <ResizableTableCell>
+                      <span className="text-white font-medium">{agent.name}</span>
+                    </ResizableTableCell>
+                    <ResizableTableCell>
+                      <StatusBadge status={agent.status} />
+                    </ResizableTableCell>
+                    <ResizableTableCell>
+                      <span className="text-muted">{agent.model}</span>
+                    </ResizableTableCell>
+                    <ResizableTableCell>
+                      <span className="text-muted" title={getSkillNames(agent.skillIds)}>
+                        {getSkillNames(agent.skillIds)}
+                      </span>
+                    </ResizableTableCell>
+                    <ResizableTableCell>
+                      <span className="text-muted" title={getMcpNames(agent.mcpIds)}>
+                        {getMcpNames(agent.mcpIds)}
+                      </span>
+                    </ResizableTableCell>
+                    <ResizableTableCell align="right">
+                      <div className="flex items-center justify-end gap-2">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleStartChat(agent.id);
+                          }}
+                          className="p-2 rounded-lg text-muted hover:text-primary hover:bg-primary/10 transition-colors"
+                          title="Start chat with this agent"
+                        >
+                          <span className="material-symbols-outlined text-xl">chat</span>
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedAgent(agent);
+                          }}
+                          className="p-2 rounded-lg text-muted hover:text-white hover:bg-dark-hover transition-colors"
+                          title="Edit agent"
+                        >
+                          <span className="material-symbols-outlined text-xl">edit</span>
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDeleteClick(agent);
+                          }}
+                          className="p-2 rounded-lg text-muted hover:text-status-error hover:bg-status-error/10 transition-colors"
+                          title="Delete agent"
+                        >
+                          <span className="material-symbols-outlined text-xl">delete</span>
+                        </button>
+                      </div>
+                    </ResizableTableCell>
                   </tr>
-                </thead>
-                <tbody>
-                  {filteredAgents.map((agent) => (
-                    <tr
-                      key={agent.id}
-                      className={clsx(
-                        'border-b border-dark-border hover:bg-dark-hover transition-colors cursor-pointer',
-                        selectedAgent?.id === agent.id && 'bg-dark-hover'
-                      )}
-                      onClick={() => setSelectedAgent(agent)}
-                    >
-                      <td className="px-6 py-4">
-                        <span className="text-white font-medium">{agent.name}</span>
-                      </td>
-                      <td className="px-6 py-4">
-                        <StatusBadge status={agent.status} />
-                      </td>
-                      <td className="px-6 py-4 text-muted">{agent.model}</td>
-                      <td className="px-6 py-4 text-muted">{agent.maxTurns}</td>
-                      <td className="px-6 py-4">
-                        <div className="flex items-center justify-end gap-2">
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setSelectedAgent(agent);
-                            }}
-                            className="p-2 rounded-lg text-muted hover:text-white hover:bg-dark-hover transition-colors"
-                          >
-                            <span className="material-symbols-outlined text-xl">edit</span>
-                          </button>
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setAgents((prev) => prev.filter((a) => a.id !== agent.id));
-                            }}
-                            className="p-2 rounded-lg text-muted hover:text-status-error hover:bg-status-error/10 transition-colors"
-                          >
-                            <span className="material-symbols-outlined text-xl">delete</span>
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+                ))}
+                {filteredAgents.length === 0 && (
+                  <tr>
+                    <td colSpan={6} className="px-6 py-12 text-center">
+                      <span className="material-symbols-outlined text-4xl text-muted mb-2">smart_toy</span>
+                      <p className="text-muted">No agents found</p>
+                    </td>
+                  </tr>
+                )}
+              </ResizableTable>
             )}
           </div>
         </div>
@@ -250,6 +296,20 @@ export default function AgentsPage() {
                 />
               </div>
 
+              {/* System Prompt */}
+              <div>
+                <label className="block text-sm font-medium text-muted mb-2">System Prompt</label>
+                <textarea
+                  value={selectedAgent.systemPrompt || ''}
+                  onChange={(e) =>
+                    setSelectedAgent({ ...selectedAgent, systemPrompt: e.target.value || undefined })
+                  }
+                  placeholder="Enter system prompt instructions..."
+                  rows={4}
+                  className="w-full px-4 py-2 bg-dark-bg border border-dark-border rounded-lg text-white placeholder:text-muted focus:outline-none focus:border-primary resize-none"
+                />
+              </div>
+
               {/* Base Model */}
               <div>
                 <label className="block text-sm font-medium text-muted mb-2">Base Model</label>
@@ -268,42 +328,13 @@ export default function AgentsPage() {
                 </select>
               </div>
 
-              {/* Max Token */}
-              <div>
-                <label className="block text-sm font-medium text-muted mb-2">Max Token</label>
-                <input
-                  type="number"
-                  value={selectedAgent.maxTurns}
-                  onChange={(e) =>
-                    setSelectedAgent({ ...selectedAgent, maxTurns: parseInt(e.target.value) })
-                  }
-                  className="w-full px-4 py-2 bg-dark-bg border border-dark-border rounded-lg text-white focus:outline-none focus:border-primary"
-                />
-              </div>
-
-              {/* Enable Thinking Process */}
-              <div className="flex items-center justify-between">
-                <label className="text-sm font-medium text-muted">Enable Thinking Process</label>
-                <button
-                  onClick={() =>
-                    setSelectedAgent({
-                      ...selectedAgent,
-                      enableToolLogging: !selectedAgent.enableToolLogging,
-                    })
-                  }
-                  className={clsx(
-                    'w-12 h-6 rounded-full transition-colors relative',
-                    selectedAgent.enableToolLogging ? 'bg-primary' : 'bg-dark-border'
-                  )}
-                >
-                  <span
-                    className={clsx(
-                      'absolute top-1 w-4 h-4 rounded-full bg-white transition-transform',
-                      selectedAgent.enableToolLogging ? 'left-7' : 'left-1'
-                    )}
-                  />
-                </button>
-              </div>
+              {/* Built-in Tools */}
+              <ToolSelector
+                selectedTools={selectedAgent.allowedTools}
+                onChange={(allowedTools) =>
+                  setSelectedAgent({ ...selectedAgent, allowedTools })
+                }
+              />
 
               {/* Enabled Skills */}
               <MultiSelect
@@ -320,7 +351,6 @@ export default function AgentsPage() {
                 }
                 loading={loadingSkills}
                 error={skillsError || undefined}
-                onOpen={fetchSkills}
               />
 
               {/* Enabled MCPs */}
@@ -338,7 +368,6 @@ export default function AgentsPage() {
                 }
                 loading={loadingMCPs}
                 error={mcpsError || undefined}
-                onOpen={fetchMCPs}
               />
             </div>
 
@@ -371,10 +400,8 @@ export default function AgentsPage() {
       >
         <CreateAgentForm
           onClose={() => setIsCreateModalOpen(false)}
-          onCreate={(agent) => {
-            setAgents((prev) => [...prev, agent]);
-            setIsCreateModalOpen(false);
-          }}
+          onCreate={handleCreateAgent}
+          models={models}
           skills={skills}
           mcpServers={mcpServers}
           loadingSkills={loadingSkills}
@@ -385,6 +412,25 @@ export default function AgentsPage() {
           onFetchMCPs={fetchMCPs}
         />
       </Modal>
+
+      {/* Delete Confirmation Dialog */}
+      <ConfirmDialog
+        isOpen={deleteTarget !== null}
+        onClose={() => setDeleteTarget(null)}
+        onConfirm={handleDeleteConfirm}
+        title="Delete Agent"
+        message={
+          <>
+            Are you sure you want to delete <strong>{deleteTarget?.name}</strong>?
+            <br />
+            <span className="text-sm">This action cannot be undone.</span>
+          </>
+        }
+        confirmText="Delete"
+        cancelText="Cancel"
+        variant="danger"
+        isLoading={isDeleting}
+      />
     </div>
   );
 }
@@ -393,6 +439,7 @@ export default function AgentsPage() {
 function CreateAgentForm({
   onClose,
   onCreate,
+  models,
   skills,
   mcpServers,
   loadingSkills,
@@ -403,7 +450,8 @@ function CreateAgentForm({
   onFetchMCPs,
 }: {
   onClose: () => void;
-  onCreate: (agent: Agent) => void;
+  onCreate: (data: AgentCreateRequest) => void;
+  models: string[];
   skills: Skill[];
   mcpServers: MCPServer[];
   loadingSkills: boolean;
@@ -415,34 +463,32 @@ function CreateAgentForm({
 }) {
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
-  const [model, setModel] = useState('Claude Sonnet 4');
+  const [systemPrompt, setSystemPrompt] = useState('');
+  const [model, setModel] = useState(models[0] || '');
   const [skillIds, setSkillIds] = useState<string[]>([]);
   const [mcpIds, setMcpIds] = useState<string[]>([]);
+  const [allowedTools, setAllowedTools] = useState<string[]>(getDefaultEnabledTools());
+
+  // Update default model when models list loads
+  useEffect(() => {
+    if (models.length > 0 && !model) {
+      setModel(models[0]);
+    }
+  }, [models, model]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const newAgent: Agent = {
-      id: Date.now().toString(),
+    const data: AgentCreateRequest = {
       name,
-      description,
+      description: description || undefined,
       model,
       permissionMode: 'default',
-      maxTurns: 4096,
-      systemPrompt: '',
-      allowedTools: [],
+      systemPrompt: systemPrompt || undefined,
       skillIds,
       mcpIds,
-      workingDirectory: '/workspace',
-      enableBashTool: false,
-      enableFileTools: true,
-      enableWebTools: false,
-      enableToolLogging: true,
-      enableSafetyChecks: true,
-      status: 'active',
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
+      allowedTools,
     };
-    onCreate(newAgent);
+    onCreate(data);
   };
 
   return (
@@ -471,6 +517,17 @@ function CreateAgentForm({
       </div>
 
       <div>
+        <label className="block text-sm font-medium text-muted mb-2">System Prompt</label>
+        <textarea
+          value={systemPrompt}
+          onChange={(e) => setSystemPrompt(e.target.value)}
+          placeholder="Enter system prompt instructions for the agent (optional)"
+          rows={4}
+          className="w-full px-4 py-2 bg-dark-bg border border-dark-border rounded-lg text-white placeholder:text-muted focus:outline-none focus:border-primary resize-none"
+        />
+      </div>
+
+      <div>
         <label className="block text-sm font-medium text-muted mb-2">Base Model</label>
         <select
           value={model}
@@ -484,6 +541,12 @@ function CreateAgentForm({
           ))}
         </select>
       </div>
+
+      {/* Built-in Tools */}
+      <ToolSelector
+        selectedTools={allowedTools}
+        onChange={setAllowedTools}
+      />
 
       {/* Skills Selection */}
       <MultiSelect

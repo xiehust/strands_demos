@@ -48,26 +48,14 @@ stop_service "backend"
 # Stop frontend
 stop_service "frontend"
 
-# Also kill any remaining processes on those ports
+# Also kill any remaining backend/frontend processes (more targeted approach)
 echo "🧹 Cleaning up any remaining processes..."
 
-# Get current shell PID and parent PID to avoid killing ourselves
-CURRENT_PID=$$
-PARENT_PID=$PPID
-
-# Kill processes on port 8000 (backend), excluding current shell
-for pid in $(lsof -ti:8000 2>/dev/null); do
-    if [ "$pid" != "$CURRENT_PID" ] && [ "$pid" != "$PARENT_PID" ]; then
-        kill -9 "$pid" 2>/dev/null || true
-    fi
-done
-
-# Kill processes on port 5173 (frontend), excluding current shell
-for pid in $(lsof -ti:5173 2>/dev/null); do
-    if [ "$pid" != "$CURRENT_PID" ] && [ "$pid" != "$PARENT_PID" ]; then
-        kill -9 "$pid" 2>/dev/null || true
-    fi
-done
+# Only kill specific processes by name pattern, not by port
+# This avoids accidentally killing VS Code or other IDE processes
+pkill -f "uvicorn.*main:app" 2>/dev/null || true
+pkill -f "vite.*5173" 2>/dev/null || true
+pkill -f "node.*vite" 2>/dev/null || true
 
 echo ""
 echo "✅ AI Agent Platform stopped successfully"

@@ -16,7 +16,6 @@ from .mcp import (
     MCPCreateRequest,
     MCPUpdateRequest,
     MCPResponse,
-    MCPTestResult,
 )
 from .message import (
     ChatRequest,
@@ -41,7 +40,6 @@ __all__ = [
     "MCPCreateRequest",
     "MCPUpdateRequest",
     "MCPResponse",
-    "MCPTestResult",
     "ChatRequest",
     "TextContent",
     "ToolUseContent",

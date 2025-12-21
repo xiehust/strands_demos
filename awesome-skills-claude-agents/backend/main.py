@@ -13,8 +13,9 @@ from middleware.error_handler import setup_error_handlers
 from middleware.rate_limit import limiter
 
 # Configure logging
+log_level = logging.DEBUG if settings.debug else logging.INFO
 logging.basicConfig(
-    level=logging.INFO,
+    level=log_level,
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
 )
 logger = logging.getLogger(__name__)

@@ -16,10 +16,8 @@ class MCPConfig(BaseModel):
     )
     allowed_tools: list[str] | None = None
     rejected_tools: list[str] | None = None
-    status: Literal["online", "offline", "error"] = "offline"
     endpoint: str | None = None
     version: str | None = None
-    agent_count: int = 0
     created_at: datetime | None = None
     updated_at: datetime | None = None
 
@@ -70,17 +68,7 @@ class MCPResponse(BaseModel):
     config: dict[str, Any]
     allowed_tools: list[str] | None = None
     rejected_tools: list[str] | None = None
-    status: str
     endpoint: str | None = None
     version: str | None = None
-    agent_count: int
     created_at: str
     updated_at: str
-
-
-class MCPTestResult(BaseModel):
-    """Result of MCP connection test."""
-
-    status: Literal["success", "error"]
-    message: str | None = None
-    error: str | None = None
